@@ -6,7 +6,7 @@
 #    By: jcoignet <jcoignet@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/11/17 18:32:43 by jcoignet          #+#    #+#              #
-#    Updated: 2016/01/22 12:53:52 by jcoignet         ###   ########.fr        #
+#    Updated: 2016/01/22 13:03:22 by jcoignet         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,7 +21,7 @@ OBJ = $(patsubst $(SRCDIR)%.c,%.o,$(SRC))
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	$(GCC) -o $(NAME) $(OBJ)
+	$(GCC) -o $(NAME) $(OBJ) -lpcap
 
 $(OBJ): $(SRC)
 	$(GCC) -c $(SRC) -I$(INCLUDES)

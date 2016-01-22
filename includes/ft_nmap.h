@@ -6,11 +6,15 @@
 /*   By: jcoignet <jcoignet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:09 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/22 12:54:33 by jcoignet         ###   ########.fr       */
+/*   Updated: 2016/01/22 13:02:32 by jcoignet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef FT_NMAP_H
 # define FT_NMAP_H
+
+# include <pcap.h>
+# include <stdio.h>
+# include <stdlib.h>
 
 #endif

@@ -36,3 +36,6 @@
 *.swp
 *.swo
 *.swn
+
+# Binary
+ft_nmap
