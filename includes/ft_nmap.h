@@ -16,5 +16,21 @@
 # include <pcap.h>
 # include <stdio.h>
 # include <stdlib.h>
+# include <netdb.h>
+# include <string.h>
+# include <arpa/inet.h>
+# include <netinet/ether.h>
+# include <netinet/ip.h>
+# include <sys/time.h>
+# include <time.h>
+# include <errno.h>
+
+# define IP_BUFFLEN 512
+# define VERSION_NBR "1.0"
+
+typedef struct    s_nmap
+{
+    char	    *progname;
+}		    t_nmap;
 
 #endif
