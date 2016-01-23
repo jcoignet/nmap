@@ -113,17 +113,17 @@ u_int16_t handle_ethernet(const u_char* packet)
     /* lets start with the ether header... */
     eptr = (struct ether_header *) packet;
 
-    fprintf(stdout,"ethernet header source: %s"
-            ,ether_ntoa((const struct ether_addr *)&eptr->ether_shost));
-    fprintf(stdout," destination: %s "
-            ,ether_ntoa((const struct ether_addr *)&eptr->ether_dhost));
+    fprintf(stdout,"ethernet header source: %s",
+            ether_ntoa((const struct ether_addr *)&eptr->ether_shost));
+    fprintf(stdout," destination: %s ",
+            ether_ntoa((const struct ether_addr *)&eptr->ether_dhost));
 
-        /* check to see if we have an ip packet */
+    /* check to see if we have an ip packet */
     if (ntohs (eptr->ether_type) == ETHERTYPE_IP)
-	fprintf(stdout,"(IP)");
-     else  if (ntohs (eptr->ether_type) == ETHERTYPE_ARP)
+    	fprintf(stdout,"(IP)");
+    else if (ntohs (eptr->ether_type) == ETHERTYPE_ARP)
         fprintf(stdout,"(ARP)");
-    else  if (ntohs (eptr->ether_type) == ETHERTYPE_REVARP)
+    else if (ntohs (eptr->ether_type) == ETHERTYPE_REVARP)
         fprintf(stdout,"(RARP)");
     else
         fprintf(stdout,"(?)");
@@ -135,14 +135,14 @@ u_int16_t handle_ethernet(const u_char* packet)
 void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *packet)
 {
     if (user == NULL)
-	(void)user;
+    	(void)user;
     if (pkthdr == NULL)
-	printf("pkthdr null\n");
+	   printf("pkthdr null\n");
     if (packet == NULL)
-	printf("packet null\n");
+    	printf("packet null\n");
     u_int16_t type = handle_ethernet(packet);
     if (type == 8)//ip
-	handle_ip(pkthdr, packet);
+    	handle_ip(pkthdr, packet);
     printf("TYPE%d\n", type);
 }
 
@@ -189,8 +189,8 @@ void	ft_nmap(void)
     //cnt = nbr of packets if 0 all
     while(1)
     {
-	int r = pcap_dispatch(handle, 0, ft_callback, NULL);
-	fprintf(stderr, "dispatch ret [%d] %s\n", r, strerror(errno));
+    	int r = pcap_dispatch(handle, 0, ft_callback, NULL);
+    	fprintf(stderr, "dispatch ret [%d] %s\n", r, strerror(errno));
     }
 }
 
