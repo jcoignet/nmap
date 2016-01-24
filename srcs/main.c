@@ -189,15 +189,6 @@ void	ft_nmap(t_nmap *nmap)
 
     if (pcap_compile(handle, &fp, filter, 0, netp) == -1)
     {
-<<<<<<< HEAD
-	fprintf(stderr, "Couldn't parse filter %s: %s\n", filter, pcap_geterr(handle));
-	exit(EXIT_FAILURE);
-    }
-    if (pcap_setfilter(handle, &fp) == -1)
-    {
-	fprintf(stderr, "Couldn't install filter %s: %s\n", filter, pcap_geterr(handle));
-	exit(EXIT_FAILURE);
-=======
     	fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handle));
     	exit(EXIT_FAILURE);
     }
@@ -205,7 +196,6 @@ void	ft_nmap(t_nmap *nmap)
     {
     	fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle));
     	exit(EXIT_FAILURE);
->>>>>>> 64d2bb921f60c87550ebebae8f6b8b8e990f7891
     }
 
 
@@ -248,6 +238,8 @@ int	main(int ac, char **av)
 	t_nmap	*nmap;
 
 	nmap = malloc(sizeof(t_nmap));
+    t_options *opt = parse_opt(ac, av);
+    print_options(opt);
 	nmap->progname = strdup(av[0]);//ft_
 	nmap->hostname = strdup(av[1]);//ft
 	addr_info(nmap);
@@ -259,21 +251,7 @@ int	main(int ac, char **av)
 	}
 	//nmap->info;
 
-/*	printf("netp%d mask%d\n", netp, maskp);
-	struct in_addr tmp;
-	tmp.s_addr=netp;
-	printf ("%s\n", inet_ntoa(tmp));
-	nmap_header(av[0]);
-	addr_info("google.fr");//216.58.211.67*/
-<<<<<<< HEAD
 	ft_nmap(nmap);
-	ac++;//
-	av++;
-=======
-    t_options *opt = parse_opt(ac, av);
-    print_options(opt);
-	ft_nmap();
->>>>>>> 64d2bb921f60c87550ebebae8f6b8b8e990f7891
 	return EXIT_SUCCESS;
 }
 

@@ -33,10 +33,8 @@
 
 # define IP_BUFFLEN 512
 # define VERSION_NBR "1.0"
-<<<<<<< HEAD
 # define PING_DATALEN 56
 # define ICMP_HEADER_LEN 8
-=======
 # define NB_SCAN 6
 
 typedef enum	e_scan
@@ -48,7 +46,6 @@ typedef enum	e_scan
 	SCAN_ACK,
 	SCAN_UDP
 }				t_scan;
->>>>>>> 64d2bb921f60c87550ebebae8f6b8b8e990f7891
 
 typedef struct	s_nmap
 {
@@ -59,7 +56,6 @@ typedef struct	s_nmap
     struct addrinfo	*info;
 }		t_nmap;
 
-void		ft_ping(t_nmap *nmap);
 
 typedef struct	s_options
 {
@@ -75,5 +71,6 @@ typedef struct	s_options
 
 t_options		*parse_opt(int ac, char **av);
 void			print_options(t_options *opt);
+void		ft_ping(t_nmap *nmap);
 
 #endif
