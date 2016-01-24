@@ -165,7 +165,7 @@ void	ft_nmap(t_nmap *nmap)
 //   filter = strcat(filter, "src ");// and (dst ");
  //   filter = strcat(filter, nmap->hostip);
     //filter = strcat(filter, " and (dst port 80 or dst port 443)");
-    filter = strcat(filter, " and src port 80");
+    filter = strcat(filter, " and (src port 80 or src port 443)");
  //   filter = strcat(filter, ")");// and (dst portrange 0-65535)");
 
 	dev = pcap_lookupdev(errbuf);
@@ -189,12 +189,12 @@ void	ft_nmap(t_nmap *nmap)
 
     if (pcap_compile(handle, &fp, filter, 0, netp) == -1)
     {
-    	fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handle));
+    	fprintf(stderr, "Couldn't parse filter %s: %s\n", filter, pcap_geterr(handle));
     	exit(EXIT_FAILURE);
     }
     if (pcap_setfilter(handle, &fp) == -1)
     {
-    	fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle));
+    	fprintf(stderr, "Couldn't install filter %s: %s\n", filter, pcap_geterr(handle));
     	exit(EXIT_FAILURE);
     }
 
@@ -238,11 +238,13 @@ int	main(int ac, char **av)
 	t_nmap	*nmap;
 
 	nmap = malloc(sizeof(t_nmap));
-    t_options *opt = parse_opt(ac, av);
-    print_options(opt);
-	nmap->progname = strdup(av[0]);//ft_
-	nmap->hostname = strdup(av[1]);//ft
+//	t_options *opt = parse_opt(ac, av);
+//	print_options(opt);
+	nmap->progname = ft_strdup(av[0]);
+	nmap->hostname = ft_strdup(av[1]);
 	addr_info(nmap);
+	
+	//create_sock depends of the port and scan type
 	nmap->sock = create_socket(nmap);
 	if (nmap->sock < 0)
 	{
@@ -252,6 +254,7 @@ int	main(int ac, char **av)
 	//nmap->info;
 
 	ft_nmap(nmap);
+	(void)ac;
 	return EXIT_SUCCESS;
 }
 
