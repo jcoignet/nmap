@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_nmap.h                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jcoignet <jcoignet@student.42.fr>          +#+  +:+       +#+        */
+/*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:09 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/22 13:02:32 by jcoignet         ###   ########.fr       */
+/*   Updated: 2016/01/24 18:43:20 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 # include <sys/time.h>
 # include <time.h>
 # include <errno.h>
+# include <stdint.h>
 
 # define IP_BUFFLEN 512
 # define VERSION_NBR "1.0"
