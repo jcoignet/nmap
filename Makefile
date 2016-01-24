@@ -14,7 +14,8 @@ NAME = ft_nmap
 GCC = gcc -Wall -Wextra -Werror
 INCLUDES = ./includes/
 SRCDIR = ./srcs/
-SRCNAMES = main.c
+SRCNAMES = main.c \
+	   ping.c
 SRC = $(addprefix $(SRCDIR), $(SRCNAMES))
 OBJ = $(patsubst $(SRCDIR)%.c,%.o,$(SRC))
 
