@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: jcoignet <jcoignet@student.42.fr>          +#+  +:+       +#+         #
+#    By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/11/17 18:32:43 by jcoignet          #+#    #+#              #
-#    Updated: 2016/01/22 13:03:22 by jcoignet         ###   ########.fr        #
+#    Updated: 2016/01/24 18:46:59 by gbersac          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,18 +14,23 @@ NAME = ft_nmap
 GCC = gcc -Wall -Wextra -Werror
 INCLUDES = ./includes/
 SRCDIR = ./srcs/
-SRCNAMES = main.c \
-	   ping.c
+SRCNAMES = main.c options.c ping.c
 SRC = $(addprefix $(SRCDIR), $(SRCNAMES))
 OBJ = $(patsubst $(SRCDIR)%.c,%.o,$(SRC))
 
-all: $(NAME)
+.PHONY: all $(NAME) libft
 
-$(NAME): $(OBJ)
-	$(GCC) -o $(NAME) $(OBJ) -lpcap
+all:  $(NAME)
+
+libft:
+	@echo \	MAKE in directory : $@
+	@$(MAKE) --directory=$@
+
+$(NAME): $(OBJ) libft
+	$(GCC) -o $(NAME) $(OBJ) -lpcap -Llibft -lft
 
 $(OBJ): $(SRC)
-	$(GCC) -c $(SRC) -I$(INCLUDES)
+	$(GCC) -c $(SRC) -I$(INCLUDES) -I./libft/inc
 
 clean:
 	rm -rf $(OBJ)
