@@ -177,13 +177,13 @@ void	ft_nmap(void)
 
     if (pcap_compile(handle, &fp, filter_exp, 0, netp) == -1)
     {
-	fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handle));
-	exit(EXIT_FAILURE);
+    	fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handle));
+    	exit(EXIT_FAILURE);
     }
     if (pcap_setfilter(handle, &fp) == -1)
     {
-	fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle));
-	exit(EXIT_FAILURE);
+    	fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle));
+    	exit(EXIT_FAILURE);
     }
 
     //cnt = nbr of packets if 0 all
@@ -203,8 +203,8 @@ int	main(int ac, char **av)
 	printf ("%s\n", inet_ntoa(tmp));
 	nmap_header(av[0]);
 	addr_info("google.fr");//216.58.211.67*/
+    t_options *opt = parse_opt(ac, av);
+    print_options(opt);
 	ft_nmap();
-	ac++;//
-	av++;
 	return EXIT_SUCCESS;
 }
