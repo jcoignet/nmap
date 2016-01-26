@@ -48,6 +48,20 @@ typedef enum	e_scan
 	SCAN_UDP
 }				t_scan;
 
+typedef enum	e_status
+{
+	OPEN,
+	CLOSED,
+	FILTERED
+}		t_status;
+
+typedef struct	s_answer
+{
+    int		port;
+    t_status	status;
+    char	*service;
+}		t_answer;
+
 typedef struct	s_options
 {
 	char		*ports;

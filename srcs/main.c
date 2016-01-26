@@ -56,56 +56,6 @@ void	nmap_header(char *progname)
     printf("%s CET\n", buf);
 }
 
-u_char* handle_ip(const struct pcap_pkthdr* pkthdr,const u_char* packet)
-{
-    const struct ip* ip;
-    u_int length = pkthdr->len;
-    u_int hlen,off,version;
-    unsigned int len;
-
-    /* jump pass the ethernet header */
-    ip = (struct ip*)(packet + sizeof(struct ether_header));
-    length = pkthdr->len - sizeof(struct ether_header);
-
-    /* check to see we have a packet of valid length */
-   if (length < sizeof(struct ip))
-   {
-        printf("truncated ip %d",length);
-        return NULL;
-   }
-
-   len = ntohs(ip->ip_len);
-   hlen = ip->ip_hl;
-   version = ip->ip_v;
-   /* check version */
-   if(version != 4)
-   {
-      fprintf(stdout,"Unknown version %d\n",version);
-      return NULL;
-   }
-
-    /* check header length */
-    if(hlen < 5 )
-        fprintf(stdout,"bad-hlen %d \n",hlen);
-
-   /* see if we have as much packet as we should */
-    if(length < len)
-        printf("\ntruncated IP - %d bytes missing\n",len - length);
-
-    /* Check to see if we have the first fragment */
-    off = ntohs(ip->ip_off);
-    if((off & 0x1fff) == 0 )/* aka no 1's in first 13 bits */
-    {/* print SOURCE DESTINATION hlen version len offset */
-        fprintf(stdout,"IP: ");
-        fprintf(stdout,"src %s ",
-                inet_ntoa(ip->ip_src));
-        fprintf(stdout,"dst %s\n",
-                inet_ntoa(ip->ip_dst));
-    }
-
-        return NULL;
-}
-
 void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *packet)
 {
     struct tcphdr   *tcph;
@@ -114,6 +64,7 @@ void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *p
 //    iph = (struct iphdr*)(packet + sizeof(struct ether_header));
     tcph = (struct tcphdr*)(packet + sizeof(struct iphdr) + sizeof(struct ether_header));
     uint16_t	src_port, dst_port;
+    t_answer *ans = (t_answer*)user;
 
     src_port = ntohs(tcph->source);//ntohs(tcph->source);
     dst_port = ntohs(tcph->dest);
@@ -122,19 +73,23 @@ void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *p
     {
         printf("src %d dst %d SYN %d ACK %d RST %d service %s/%s\n",
 	    src_port, dst_port, tcph->syn, tcph->ack, tcph->rst, service->s_name, service->s_proto);
+	ans->service = ft_strjoin(service->s_name, service->s_proto);//+ service->s_proto !
     }
     else
     {
         printf("src %d dst %d SYN %d ACK %d RST %d\n",
 	    src_port, dst_port, tcph->syn, tcph->ack, tcph->rst);
     }
-//    handle_ip(pkthdr, packet);
-    (void)user;
+
+    if (tcph->syn == 1 && tcph->ack == 1)//check bitwise ?
+	ans->status = OPEN;
+    else if (tcph->ack == 1 && tcph->rst == 1)
+	ans->status = CLOSED;
     (void)pkthdr;
     (void)packet;
 }
 
-void	ft_nmap(t_nmap *nmap)
+t_answer	*ft_nmap(t_nmap *nmap)
 {
     char	*dev, errbuf[PCAP_ERRBUF_SIZE];
     bpf_u_int32	netp, maskp;
@@ -176,48 +131,22 @@ void	ft_nmap(t_nmap *nmap)
     }
 
 
+    t_answer	*ans = malloc(sizeof(t_answer));
+    ans->port = nmap->tport;
+    ans->service = NULL;
     r= 0 ;
-    while (nmap->tport < 31400)
-    {
-	ft_ping(nmap);
+    ft_ping(nmap);
 
-    	r = pcap_dispatch(handle, 0, ft_callback, NULL);
-	//if r>0 nbr of packets read
-	//r == 0 no packet read
-	//r == -1 error
-	//r == -2 pcap_break called
-	if (r == -1)
-	    fprintf(stderr, "port %d dispatch ret [%d] %s\n", nmap->tport, r, strerror(errno));
-	else if (r == 0)
-	    fprintf(stderr, "port %d filtered\n", nmap->tport);
-/*	else if (r > 0)
+	r = pcap_dispatch(handle, 0, ft_callback, (u_char*)ans);
+//	if (r == -1)
+//	    fprintf(stderr, "port %d dispatch ret [%d] %s\n", nmap->tport, r, strerror(errno));
+	if (r == 0)
 	{
-	    struct servent *serv;
-	    serv = getservbyport(htons(nmap->tport), NULL);//2nd param if protocol
-	    if (serv == NULL)
-		fprintf(stdout, "%d packets read for port %d name unknown service\n"
-			, r, nmap->tport);
-	    else
-		fprintf(stdout, "%d packets read for port %d name [%s] proto [%s]\n"
-		    , r, nmap->tport, serv->s_name, serv->s_proto);
-	}*/
-//	nmap->tport++;
+	    ans->status = FILTERED;
+	    fprintf(stderr, "port %d filtered\n", nmap->tport);
+	}
 
-
-	// for tests
-	if (nmap->tport == 22)
-	    nmap->tport = 25;
-	else if (nmap->tport == 25)
-	    nmap->tport = 80;
-	else if (nmap->tport == 80)
-	    nmap->tport = 443;
-	else if (nmap->tport == 443)
-	    nmap->tport = 9929;
-	else if (nmap->tport == 9929)
-	    nmap->tport = 31337;
-	else
-	    nmap->tport += 1;
-    }
+	return ans;
 }
 
 int	create_socket(t_nmap *nmap)
@@ -256,7 +185,22 @@ int	main(int ac, char **av)
 	}
 	//nmap->info;
 
-	ft_nmap(nmap);
+	t_answer *ans;
+	while (nmap->tport < 31340)
+	{
+	    ans = ft_nmap(nmap);
+	    printf("PORT %d STATUS %d SERVICE %s\n", ans->port, ans->status, ans->service);
+	    if (nmap->tport == 22)
+		nmap->tport = 25;
+	    else if (nmap->tport == 25)
+		nmap->tport = 80;
+	    else if (nmap->tport == 80)
+		nmap->tport = 9929;
+	    else if (nmap->tport == 9929)
+		nmap->tport = 31337;
+	    else if (nmap->tport >= 31337)
+		nmap->tport++;
+	}
 	(void)ac;
 	return EXIT_SUCCESS;
 }
