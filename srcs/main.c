@@ -27,7 +27,7 @@ void		addr_info(t_nmap *nmap)
 	inet_ntop(AF_INET,
 			(void*)&(((struct sockaddr_in*)(info->ai_addr))->sin_addr.s_addr),
 			buf,IP_BUFFLEN);
-	nmap->hostip = strdup(buf);//
+	nmap->hostip = ft_strdup(buf);
 	nmap->info = info;
 	((struct sockaddr_in*)(nmap->info->ai_addr))->sin_port = nmap->tport;
 	client = gethostbyaddr((void*)&(((struct sockaddr_in*)(info->ai_addr))->sin_addr.s_addr),
@@ -38,7 +38,7 @@ void		addr_info(t_nmap *nmap)
 	    fqdn = strdup(client->h_name);
 	printf("ft_nmap scan report for %s (%s)\n", nmap->hostname, buf);
 	//host is up + ping
-	printf("rDNS record for %s: %s\n", buf, fqdn);
+	printf("rDNS record for %s: %s\n\n", buf, fqdn);
 }
 
 void	nmap_header(char *progname)
@@ -99,60 +99,39 @@ u_char* handle_ip(const struct pcap_pkthdr* pkthdr,const u_char* packet)
         fprintf(stdout,"IP: ");
         fprintf(stdout,"src %s ",
                 inet_ntoa(ip->ip_src));
-        fprintf(stdout,"dst %s hlen %d version %d len %d offset %d\n",
-                inet_ntoa(ip->ip_dst),
-                hlen,version,len,off);
+        fprintf(stdout,"dst %s\n",
+                inet_ntoa(ip->ip_dst));
     }
 
         return NULL;
 }
 
-u_short handle_ethernet(const u_char* packet)
-{
-    struct ether_header *eptr;  /* net/ethernet.h */
-
-    /* lets start with the ether header... */
-    eptr = (struct ether_header *) packet;
-
-/*    fprintf(stdout,"ethernet header source: %s",
-            ether_ntoa((const struct ether_addr *)&eptr->ether_shost));
-    fprintf(stdout," destination: %s ",
-            ether_ntoa((const struct ether_addr *)&eptr->ether_dhost));*/
-
-    /* check to see if we have an ip packet */
-    if (ntohs (eptr->ether_type) == ETHERTYPE_IP)
-    	fprintf(stdout,"(IP)");
-    else if (ntohs (eptr->ether_type) == ETHERTYPE_ARP)
-        fprintf(stdout,"(ARP)");
-    else if (ntohs (eptr->ether_type) == ETHERTYPE_REVARP)
-        fprintf(stdout,"(RARP)");
-    else
-        fprintf(stdout,"(?)");
-
-    return eptr->ether_type;
-}
-
 void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *packet)
 {
     struct tcphdr   *tcph;
+//    struct iphdr    *iph;
 
+//    iph = (struct iphdr*)(packet + sizeof(struct ether_header));
     tcph = (struct tcphdr*)(packet + sizeof(struct iphdr) + sizeof(struct ether_header));
     uint16_t	src_port, dst_port;
 
     src_port = ntohs(tcph->source);//ntohs(tcph->source);
     dst_port = ntohs(tcph->dest);
-    printf("src %d dst %d SYN %d ACK %d RST %d\n",
+    struct servent  *service = getservbyport(tcph->source, NULL);
+    if (service != NULL)
+    {
+        printf("src %d dst %d SYN %d ACK %d RST %d service %s/%s\n",
+	    src_port, dst_port, tcph->syn, tcph->ack, tcph->rst, service->s_name, service->s_proto);
+    }
+    else
+    {
+        printf("src %d dst %d SYN %d ACK %d RST %d\n",
 	    src_port, dst_port, tcph->syn, tcph->ack, tcph->rst);
-    if (user == NULL)
-    	(void)user;
-    if (pkthdr == NULL)
-	   printf("pkthdr null\n");
-    if (packet == NULL)
-    	printf("packet null\n");
-//    u_short type = handle_ethernet(packet);
- //   if (type == 8)//ip
-    	handle_ip(pkthdr, packet);
-    //printf("TYPE%d\n", type);
+    }
+//    handle_ip(pkthdr, packet);
+    (void)user;
+    (void)pkthdr;
+    (void)packet;
 }
 
 void	ft_nmap(t_nmap *nmap)
@@ -161,19 +140,10 @@ void	ft_nmap(t_nmap *nmap)
     bpf_u_int32	netp, maskp;
     pcap_t	*handle;
     struct bpf_program fp;	/* The compiled filter expression */
-//    char filter_exp[] = "ip dst 216.58.211.67";	/* The filter expression */
-//    char filter_exp[] = "(ip dst 216.58.211.67) and (dst port 80)";
     char    *filter;
     int	    r;
 
-//    (tcp[0:2] > 1500 and tcp[0:2] < 1550) or (tcp[2:2] > 1500 and tcp[2:2] < 1550)
     filter = ft_strjoin("src ", nmap->hostip);
-//    filter = strdup("portrange 0-65535");
-//   filter = strcat(filter, "src ");// and (dst ");
- //   filter = strcat(filter, nmap->hostip);
-    //filter = strcat(filter, " and (dst port 80 or dst port 443)");
-//    filter = strcat(filter, " and (src port 80 or src port 443)");
- //   filter = strcat(filter, ")");// and (dst portrange 0-65535)");
 
 	dev = pcap_lookupdev(errbuf);
 	if (dev == NULL)
@@ -207,20 +177,46 @@ void	ft_nmap(t_nmap *nmap)
 
 
     r= 0 ;
-	ft_ping(nmap);
-    while (1)
+    while (nmap->tport < 31400)
     {
-	//send ping
-    //cnt = nbr of packets if 0 all
+	ft_ping(nmap);
+
     	r = pcap_dispatch(handle, 0, ft_callback, NULL);
 	//if r>0 nbr of packets read
 	//r == 0 no packet read
 	//r == -1 error
 	//r == -2 pcap_break called
-	if (r == -1 || r == 0)
-	    fprintf(stderr, "dispatch ret [%d] %s\n", r, strerror(errno));
-	else if (r > 0)
-	    fprintf(stdout, "%d packets read\n", r);
+	if (r == -1)
+	    fprintf(stderr, "port %d dispatch ret [%d] %s\n", nmap->tport, r, strerror(errno));
+	else if (r == 0)
+	    fprintf(stderr, "port %d filtered\n", nmap->tport);
+/*	else if (r > 0)
+	{
+	    struct servent *serv;
+	    serv = getservbyport(htons(nmap->tport), NULL);//2nd param if protocol
+	    if (serv == NULL)
+		fprintf(stdout, "%d packets read for port %d name unknown service\n"
+			, r, nmap->tport);
+	    else
+		fprintf(stdout, "%d packets read for port %d name [%s] proto [%s]\n"
+		    , r, nmap->tport, serv->s_name, serv->s_proto);
+	}*/
+//	nmap->tport++;
+
+
+	// for tests
+	if (nmap->tport == 22)
+	    nmap->tport = 25;
+	else if (nmap->tport == 25)
+	    nmap->tport = 80;
+	else if (nmap->tport == 80)
+	    nmap->tport = 443;
+	else if (nmap->tport == 443)
+	    nmap->tport = 9929;
+	else if (nmap->tport == 9929)
+	    nmap->tport = 31337;
+	else
+	    nmap->tport += 1;
     }
 }
 
@@ -228,22 +224,12 @@ int	create_socket(t_nmap *nmap)
 {
 	int	sock;
 	int	i = 1;
-	//if ((sock = socket(AF_INET, SOCK_STREAM, getprotobyname("TCP")->p_proto)) == -1)
 	if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) == -1)
-		return (-1);
+	    return -1;
 
 	if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &i, sizeof(i)) < 0)
-	    return -2;
-/*	struct sockaddr_in sin;
-	sin.sin_family = AF_INET;
-	sin.sin_port = htons(nmap->tport);
-	sin.sin_addr.s_addr = inet_addr(nmap->hostip);
-	if (bind(sock, (struct sockaddr*)&sin, sizeof(sin)) < 0)
-	    return (-3);*/
-/*	if (inet_pton(AF_INET, nmap->hostip, &(sin.sin_addr.s_addr)) != 1)
-	    return (-1);*/
-//	if (connect(sock, (const struct sockaddr*)&sin, sizeof(sin)) == -1)
-//		return (-1);
+	    return -1;
+
 	(void)nmap;
 	return (sock);
 }
@@ -257,8 +243,8 @@ int	main(int ac, char **av)
 //	print_options(opt);
 	nmap->progname = ft_strdup(av[0]);
 	nmap->hostname = ft_strdup(av[1]);
-	nmap->tport = 80;//
-	nmap->sport = 80;
+	nmap->tport = 22;//target port
+	nmap->sport = 81;//our port
 	addr_info(nmap);
 	
 	//create_sock depends of the port and scan type
