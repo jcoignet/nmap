@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:09 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/24 19:01:33 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/26 19:57:19 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,6 @@
 # include <string.h>
 # include <unistd.h>
 # include <arpa/inet.h>
-# include <netinet/ether.h>
 # include <netinet/ip.h>
 # include <netinet/ip_icmp.h>
 # include <sys/time.h>
@@ -28,6 +27,14 @@
 # include <time.h>
 # include <errno.h>
 # include <stdint.h>
+# include <pthread.h>
+# include <math.h>
+
+#ifdef __APPLE__
+# include <netinet/if_ether.h>
+#elif __linux__
+# include <netinet/ether.h>
+#endif
 
 #include "libft.h"
 
@@ -47,16 +54,6 @@ typedef enum	e_scan
 	SCAN_UDP
 }				t_scan;
 
-typedef struct	s_nmap
-{
-    int		    sock;
-    char	    *progname;
-    char	    *hostname;
-    char	*hostip;
-    struct addrinfo	*info;
-}		t_nmap;
-
-
 typedef struct	s_options
 {
 	char		*ports;
@@ -69,8 +66,18 @@ typedef struct	s_options
 	t_scan		scans[NB_SCAN];
 }				t_options;
 
-t_options		*parse_opt(int ac, char **av);
+typedef struct	s_nmap
+{
+    int		    	sock;
+    char	    	*progname;
+    char	    	*hostname;
+    char			*hostip;
+    struct addrinfo	*info;
+    t_options		opts;
+}		t_nmap;
+
+t_options		parse_opt(int ac, char **av);
 void			print_options(t_options *opt);
-void		ft_ping(t_nmap *nmap);
+void			ft_ping(t_nmap *nmap);
 
 #endif

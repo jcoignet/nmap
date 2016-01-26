@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/24 17:22:23 by gbersac           #+#    #+#             */
-/*   Updated: 2016/01/24 19:33:12 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/26 20:08:47 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,17 +36,15 @@ void print_options(t_options *opt)
 	printf("\n");
 }
 
-void free_options(t_options **opt)
+void free_options(t_options *opt)
 {
-	ft_lstdel(&(*opt)->ips, free);
-	free((*opt)->ports);
-	free(*opt);
-	*opt = NULL;
+	ft_lstdel(&opt->ips, free);
+	free(opt->ports);
 }
 
 static void help(t_options *opt)
 {
-	free_options(&opt);
+	free_options(opt);
 	puts("Help Screen\n"
 "ft_nmap [OPTIONS]\n"
 "--help      Print this help screen\n"
@@ -154,6 +152,7 @@ static int test_arg(t_options *opt, char **av)
 {
 	int		i;
 
+	i = 0;
 	if (ft_strequ(av[0], "--help"))
 		help(opt);
 	else if (ft_strequ(av[0], "--ports"))
@@ -181,31 +180,30 @@ void test_opt(t_options *opt)
 		opt->ports = strdup("1-1024");
 }
 
-t_options *parse_opt(int ac, char **av)
+t_options parse_opt(int ac, char **av)
 {
-	t_options	*to_return;
-	int		i;
-	int		res;
+	t_options	to_return;
+	int			i;
+	int			res;
 
-	to_return = (t_options*)malloc(sizeof(t_options));
-	bzero(to_return, sizeof(t_options));
-	to_return->scans[SCAN_SYN] = 1;
-	to_return->scans[SCAN_NULL] = 1;
-	to_return->scans[SCAN_FIN] = 1;
-	to_return->scans[SCAN_XMAS] = 1;
-	to_return->scans[SCAN_ACK] = 1;
-	to_return->scans[SCAN_UDP] = 1;
+	bzero(&to_return, sizeof(t_options));
+	to_return.scans[SCAN_SYN] = 1;
+	to_return.scans[SCAN_NULL] = 1;
+	to_return.scans[SCAN_FIN] = 1;
+	to_return.scans[SCAN_XMAS] = 1;
+	to_return.scans[SCAN_ACK] = 1;
+	to_return.scans[SCAN_UDP] = 1;
 
 	i = 1;
 	while (av[i] != NULL)
 	{
-		res = test_arg(to_return, av + i);
+		res = test_arg(&to_return, av + i);
 		if (res == -1)
 			_exit(EXIT_FAILURE);
 		i += res;
 	}
 
-	test_opt(to_return);
+	test_opt(&to_return);
 	return (to_return);
 	(void)ac;
 }
