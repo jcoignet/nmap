@@ -22,6 +22,7 @@
 # include <arpa/inet.h>
 # include <netinet/ether.h>
 # include <netinet/ip.h>
+# include <netinet/tcp.h>
 # include <netinet/ip_icmp.h>
 # include <sys/time.h>
 # include <sys/socket.h>
@@ -47,16 +48,6 @@ typedef enum	e_scan
 	SCAN_UDP
 }				t_scan;
 
-typedef struct	s_nmap
-{
-    int		    sock;
-    char	    *progname;
-    char	    *hostname;
-    char	*hostip;
-    struct addrinfo	*info;
-}		t_nmap;
-
-
 typedef struct	s_options
 {
 	char		*ports;
@@ -68,6 +59,18 @@ typedef struct	s_options
 	*/
 	t_scan		scans[NB_SCAN];
 }				t_options;
+
+typedef struct	s_nmap
+{
+    int		    tport;
+    int		    sport;
+    int		    sock;
+    char	    *progname;
+    char	    *hostname;
+    char	*hostip;
+    struct addrinfo	*info;
+    t_options	    *opt;
+}		t_nmap;
 
 t_options		*parse_opt(int ac, char **av);
 void			print_options(t_options *opt);

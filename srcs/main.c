@@ -29,6 +29,7 @@ void		addr_info(t_nmap *nmap)
 			buf,IP_BUFFLEN);
 	nmap->hostip = strdup(buf);//
 	nmap->info = info;
+	((struct sockaddr_in*)(nmap->info->ai_addr))->sin_port = nmap->tport;
 	client = gethostbyaddr((void*)&(((struct sockaddr_in*)(info->ai_addr))->sin_addr.s_addr),
 		sizeof(((struct sockaddr_in*)(info->ai_addr))->sin_addr.s_addr), AF_INET);
 	if (client == NULL || client->h_name == NULL)
@@ -133,16 +134,25 @@ u_short handle_ethernet(const u_char* packet)
 
 void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *packet)
 {
+    struct tcphdr   *tcph;
+
+    tcph = (struct tcphdr*)(packet + sizeof(struct iphdr) + sizeof(struct ether_header));
+    uint16_t	src_port, dst_port;
+
+    src_port = ntohs(tcph->source);//ntohs(tcph->source);
+    dst_port = ntohs(tcph->dest);
+    printf("src %d dst %d SYN %d ACK %d RST %d\n",
+	    src_port, dst_port, tcph->syn, tcph->ack, tcph->rst);
     if (user == NULL)
     	(void)user;
     if (pkthdr == NULL)
 	   printf("pkthdr null\n");
     if (packet == NULL)
     	printf("packet null\n");
-    u_short type = handle_ethernet(packet);
-    if (type == 8)//ip
+//    u_short type = handle_ethernet(packet);
+ //   if (type == 8)//ip
     	handle_ip(pkthdr, packet);
-    printf("TYPE%d\n", type);
+    //printf("TYPE%d\n", type);
 }
 
 void	ft_nmap(t_nmap *nmap)
@@ -157,15 +167,12 @@ void	ft_nmap(t_nmap *nmap)
     int	    r;
 
 //    (tcp[0:2] > 1500 and tcp[0:2] < 1550) or (tcp[2:2] > 1500 and tcp[2:2] < 1550)
-    filter = malloc(256);//
- //   filter[0] = '\0';
-    filter = strcat(filter, "src ");
-    filter = strcat(filter, nmap->hostip);
+    filter = ft_strjoin("src ", nmap->hostip);
 //    filter = strdup("portrange 0-65535");
 //   filter = strcat(filter, "src ");// and (dst ");
  //   filter = strcat(filter, nmap->hostip);
     //filter = strcat(filter, " and (dst port 80 or dst port 443)");
-    filter = strcat(filter, " and (src port 80 or src port 443)");
+//    filter = strcat(filter, " and (src port 80 or src port 443)");
  //   filter = strcat(filter, ")");// and (dst portrange 0-65535)");
 
 	dev = pcap_lookupdev(errbuf);
@@ -200,11 +207,11 @@ void	ft_nmap(t_nmap *nmap)
 
 
     r= 0 ;
- //   while (r <= 0)
- //   {
+	ft_ping(nmap);
+    while (1)
+    {
 	//send ping
     //cnt = nbr of packets if 0 all
-	ft_ping(nmap);
     	r = pcap_dispatch(handle, 0, ft_callback, NULL);
 	//if r>0 nbr of packets read
 	//r == 0 no packet read
@@ -214,22 +221,30 @@ void	ft_nmap(t_nmap *nmap)
 	    fprintf(stderr, "dispatch ret [%d] %s\n", r, strerror(errno));
 	else if (r > 0)
 	    fprintf(stdout, "%d packets read\n", r);
-   // }
+    }
 }
 
 int	create_socket(t_nmap *nmap)
 {
 	int	sock;
-	struct sockaddr_in  sin;
-	//if ((sock = socket(AF_INET, SOCK_RAW, getprotobyname("TCP")->p_proto)) == -1)
-	if ((sock = socket(AF_INET, SOCK_STREAM, getprotobyname("TCP")->p_proto)) == -1)
+	int	i = 1;
+	//if ((sock = socket(AF_INET, SOCK_STREAM, getprotobyname("TCP")->p_proto)) == -1)
+	if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) == -1)
 		return (-1);
+
+	if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &i, sizeof(i)) < 0)
+	    return -2;
+/*	struct sockaddr_in sin;
 	sin.sin_family = AF_INET;
-	sin.sin_port = htons(80);//
-	if (inet_pton(AF_INET, nmap->hostip, &(sin.sin_addr.s_addr)) != 1)
-	    return (-1);
-	if (connect(sock, (const struct sockaddr*)&sin, sizeof(sin)) == -1)
-		return (-1);
+	sin.sin_port = htons(nmap->tport);
+	sin.sin_addr.s_addr = inet_addr(nmap->hostip);
+	if (bind(sock, (struct sockaddr*)&sin, sizeof(sin)) < 0)
+	    return (-3);*/
+/*	if (inet_pton(AF_INET, nmap->hostip, &(sin.sin_addr.s_addr)) != 1)
+	    return (-1);*/
+//	if (connect(sock, (const struct sockaddr*)&sin, sizeof(sin)) == -1)
+//		return (-1);
+	(void)nmap;
 	return (sock);
 }
 
@@ -242,13 +257,15 @@ int	main(int ac, char **av)
 //	print_options(opt);
 	nmap->progname = ft_strdup(av[0]);
 	nmap->hostname = ft_strdup(av[1]);
+	nmap->tport = 80;//
+	nmap->sport = 80;
 	addr_info(nmap);
 	
 	//create_sock depends of the port and scan type
 	nmap->sock = create_socket(nmap);
 	if (nmap->sock < 0)
 	{
-	    fprintf(stderr, "Socket creation failed\n");
+	    fprintf(stderr, "Socket creation failed %d [%s]\n", nmap->sock, strerror(errno));
 	    return EXIT_FAILURE;
 	}
 	//nmap->info;

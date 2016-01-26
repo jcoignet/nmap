@@ -36,30 +36,85 @@ void		ft_catch(t_nmap *nmap)
 		return ;
 	}
 	printf("reclen %d\n", recv_len);
+	struct tcphdr *tcph = (struct tcphdr*)(recvbuf + sizeof(struct iphdr));
+    uint16_t	src_port, dst_port;
+    uint16_t	src_p, dst_p;
+
+    src_port = ntohs(tcph->source);//ntohs(tcph->source);
+    dst_port = ntohs(tcph->dest);
+    src_p = tcph->source;
+    dst_p = tcph->dest;
+    printf("CATCH src %d or %d dst %d or %d SYN %d ACK %d RST %d\n",
+	    src_port, src_p, dst_port, dst_p, tcph->syn, tcph->ack, tcph->rst);
 }
+
+struct pseudo_header
+{
+        u_int32_t source_address;
+	u_int32_t dest_address;
+	u_int8_t placeholder;
+	u_int8_t protocol;
+	u_int16_t tcp_length;
+};
 
 void		ft_ping(t_nmap *nmap)
 {
 	char	sendbuf[IP_MAXPACKET];
-	struct icmp	*icmp;
 	int	len;
 	int	sent;
-//	static int seq = 1;
-//	struct timeval	start;
 
-//	ping_data->nb_sent++;
-	icmp = (struct icmp*)sendbuf;
-	icmp->icmp_code = 0;
-	icmp->icmp_type = ICMP_ECHO;
-	icmp->icmp_cksum = 0;
-	icmp->icmp_seq = 1;
-//	icmp->icmp_seq = seq;
-	icmp->icmp_id = getpid();
-	icmp->icmp_cksum = ft_checksum((u_short*)icmp, sizeof(struct icmp));
-	len = PING_DATALEN + ICMP_HEADER_LEN;
-//	gettimeofday(&start, NULL);
-//	add_start_time(&start, ping_data, seq);
-//	seq++;
+	ft_bzero(sendbuf, IP_MAXPACKET);
+	struct iphdr *iph;
+	struct tcphdr *tcph;
+	struct sockaddr_in sin;
+
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(nmap->tport);//
+	sin.sin_addr.s_addr = inet_addr(nmap->hostip);
+	iph = (struct iphdr*)sendbuf;
+	tcph = (struct tcphdr*)(sendbuf + sizeof(struct iphdr));
+	len = sizeof(struct iphdr) + sizeof(struct tcphdr);
+	iph->ihl = 5;
+	iph->version = 4;
+	iph->tos = 0;
+	iph->tot_len = len;
+	iph->id = htons(1);
+	iph->frag_off = 0;
+	iph->ttl = 255;
+	iph->protocol = IPPROTO_TCP;
+	iph->check = 0;
+	iph->saddr = inet_addr("192.168.0.8");
+	iph->daddr = sin.sin_addr.s_addr;
+	iph->check = ft_checksum((u_short*)sendbuf, len);
+
+	tcph->source = htons(nmap->sport);//src port
+	tcph->dest = htons(nmap->tport);
+	tcph->seq = 0;
+	tcph->ack_seq = 0;
+	tcph->doff = 5;
+	tcph->res1 = 0;
+	tcph->urg = 0;
+	tcph->ack = 0;
+	tcph->psh = 0;
+	tcph->rst = 0;
+	tcph->fin = 0;
+	tcph->syn = 1;
+	tcph->window = htons(5840);
+	tcph->check = 0;
+	tcph->urg_ptr = 0;
+	tcph->check = 0;//ft_checksum((u_short*)tcph, sizeof(struct tcphdr));
+
+	struct pseudo_header psh;
+	psh.source_address = inet_addr("192.168.0.8");
+	psh.dest_address = sin.sin_addr.s_addr;
+	psh.placeholder = 0;
+	psh.protocol = IPPROTO_TCP;
+	psh.tcp_length = htons(sizeof(struct tcphdr));
+	int psize  = sizeof(struct pseudo_header) + sizeof(struct tcphdr);
+	char	*pseudogram = malloc(psize);
+	ft_memcpy(pseudogram, (char*)&psh, sizeof(struct pseudo_header));
+	ft_memcpy(pseudogram + sizeof(struct pseudo_header), tcph, sizeof(struct tcphdr));
+	tcph->check = ft_checksum((u_short*)pseudogram, psize);
 	if ((sent = sendto(nmap->sock, sendbuf, len, 0,
 			nmap->info->ai_addr, nmap->info->ai_addrlen)) < 0)
 	{
@@ -68,6 +123,6 @@ void		ft_ping(t_nmap *nmap)
 	}
 	if (sent != len)
 		printf("Warning: sent %d expected %d\n", sent, len);
-	ft_catch(nmap);
+//	ft_catch(nmap);
 }
 
