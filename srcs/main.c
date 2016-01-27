@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:39 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/27 17:06:55 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/27 17:11:55 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@ void free_nmap(t_nmap **nmap)
 {
 	free_options(&(*nmap)->opts);
 	//TODO free other options
+	pthread_mutex_destroy(&nmap->mutex);
 	free(*nmap);
 	nmap = NULL;
 }
