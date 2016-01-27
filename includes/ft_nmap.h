@@ -22,6 +22,7 @@
 # include <arpa/inet.h>
 # include <netinet/ip.h>
 # include <netinet/tcp.h>
+# include <netinet/udp.h>
 # include <netinet/ip_icmp.h>
 # include <sys/time.h>
 # include <sys/socket.h>
@@ -60,12 +61,19 @@ typedef enum	e_pstate
 	STATE_UNTESTED,
 	STATE_BEING_TESTED,
 	STATE_OPEN,
-	STATE_CLOSE,
-	STATE_FILTERING,
-	STATE_UNFILTERED
+	STATE_CLOSED,
+	STATE_FILTERED,
+	STATE_UNFILTERED,
+	STATE_OPENFILTERED
 }				t_pstate;
 
 struct s_ip;
+
+typedef struct	s_callback_data
+{
+    t_pstate	state;
+    t_scan	scan;
+}		t_callback_data;
 
 typedef struct	s_port
 {
@@ -110,11 +118,11 @@ typedef struct	s_nmap
 
 t_options		parse_opt(int ac, char **av);
 void			print_options(t_options *opt);
-void			ft_ping(t_port *port, int sock);
+void			ft_ping(t_port *port, int sock, char *ip_addr, t_scan scan);
 void			parse_ports(t_nmap *nmap);
 void			quit(t_nmap *nmap, int quit_status);
 void			free_options(t_options *opt);
-void			test_one_port(t_nmap *nmap, t_port *port, char *ip_addr);
+void			test_one_port(t_nmap *nmap, t_port *port, char *ip_addr, t_scan scan);
 void set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate new_state);
 
 /*

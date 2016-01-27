@@ -108,8 +108,12 @@ void *thread_fn(void *v_nmap)
 	t_nmap *nmap = (t_nmap*)v_nmap;
 	port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
 	while (port != NULL) {
-		test_one_port(nmap, port, ip_addr);
-		port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
+	    if (nmap->opts.scans[SCAN_UDP] == 1)//TMP
+		test_one_port(nmap, port, ip_addr, SCAN_UDP);
+	    else
+		test_one_port(nmap, port, ip_addr, SCAN_SYN);
+
+	    port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
 	}
 	pthread_exit((void*) nmap);
 }

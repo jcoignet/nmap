@@ -54,23 +54,65 @@ struct pseudo_header
 	u_int32_t dest_address;
 	u_int8_t placeholder;
 	u_int8_t protocol;
-	u_int16_t tcp_length;
+	u_int16_t length;
 };
 
-void		ft_ping(t_port *port, int sock)
+void	    udp_ping(t_port *port, int sock, char *ip_addr)
 {
+    char	sendbuf[IP_MAXPACKET];
+    int	len;
+    int	sent;
+    struct udphdr *udph;
+    struct sockaddr_in sin;
+
+    len = sizeof(struct udphdr);
+    bzero(sendbuf, IP_MAXPACKET);
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons(port->id);
+    sin.sin_addr.s_addr = inet_addr(ip_addr);
+    udph = (struct udphdr*)sendbuf;
+    udph->source = htons(port->src_port);
+    udph->dest = htons (port->id);
+    udph->len = htons(8);
+    udph->check = 0; //leave checksum 0 now, filled later by pseudo header
+
+    struct pseudo_header psh;
+    psh.source_address = inet_addr("192.168.0.8");
+    psh.dest_address = sin.sin_addr.s_addr;
+    psh.placeholder = 0;
+    psh.protocol = IPPROTO_UDP;
+    psh.length = htons(sizeof(struct udphdr));
+    int psize = sizeof(struct pseudo_header) + sizeof(struct udphdr);
+    char *pseudogram = malloc(psize);
+    memcpy(pseudogram , (char*) &psh , sizeof (struct pseudo_header));
+    memcpy(pseudogram + sizeof(struct pseudo_header) , udph , sizeof(struct udphdr));
+    udph->check = ft_checksum((u_short*) pseudogram , psize);
+    if ((sent = sendto(sock, sendbuf, len, 0,
+			port->parent->info->ai_addr, port->parent->info->ai_addrlen)) < 0)
+	printf("Error: sendto failed.\n");
+    if (sent != len)
+	printf("Warning: sent %d expected %d\n", sent, len);
+}
+
+void		ft_ping(t_port *port, int sock, char *ip_addr, t_scan scan)
+{
+	if (scan == SCAN_UDP)
+	{
+	    udp_ping(port, sock, ip_addr);
+	    return ; //TODO
+	}
+
 	char	sendbuf[IP_MAXPACKET];
 	int	len;
 	int	sent;
-
-	ft_bzero(sendbuf, IP_MAXPACKET);
 	struct iphdr *iph;
 	struct tcphdr *tcph;
 	struct sockaddr_in sin;
 
+	bzero(sendbuf, IP_MAXPACKET);
 	sin.sin_family = AF_INET;
-	sin.sin_port = htons(port->id);//
-	sin.sin_addr.s_addr = inet_addr(port->parent->hostip);
+	sin.sin_port = htons(port->id);
+	sin.sin_addr.s_addr = inet_addr(ip_addr);
 	iph = (struct iphdr*)sendbuf;
 	tcph = (struct tcphdr*)(sendbuf + sizeof(struct iphdr));
 	len = sizeof(struct iphdr) + sizeof(struct tcphdr);
@@ -109,7 +151,7 @@ void		ft_ping(t_port *port, int sock)
 	psh.dest_address = sin.sin_addr.s_addr;
 	psh.placeholder = 0;
 	psh.protocol = IPPROTO_TCP;
-	psh.tcp_length = htons(sizeof(struct tcphdr));
+	psh.length = htons(sizeof(struct tcphdr));
 	int psize  = sizeof(struct pseudo_header) + sizeof(struct tcphdr);
 	char	*pseudogram = malloc(psize);
 	ft_memcpy(pseudogram, (char*)&psh, sizeof(struct pseudo_header));
@@ -117,12 +159,8 @@ void		ft_ping(t_port *port, int sock)
 	tcph->check = ft_checksum((u_short*)pseudogram, psize);
 	if ((sent = sendto(sock, sendbuf, len, 0,
 			port->parent->info->ai_addr, port->parent->info->ai_addrlen)) < 0)
-	{
 		printf("Error: sendto failed.\n");
-		exit(EXIT_FAILURE);
-	}
 	if (sent != len)
 		printf("Warning: sent %d expected %d\n", sent, len);
-//	ft_catch(nmap);
 }
 
