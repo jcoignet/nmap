@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:09 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/27 16:38:57 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/27 17:01:27 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,7 +104,8 @@ typedef struct	s_nmap
     char			*hostip;
     struct addrinfo	*info;
     t_options		opts;
-}		t_nmap;
+    pthread_mutex_t	mutex;
+}				t_nmap;
 
 t_options		parse_opt(int ac, char **av);
 void			print_options(t_options *opt);

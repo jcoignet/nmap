@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:39 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/27 16:40:04 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/27 17:06:55 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ t_port *get_next_untested_port(t_nmap *nmap, int *port, char **ip_addr)
 
 	//for each ip
 	iter = nmap->opts.ips;
+	pthread_mutex_lock(&nmap->mutex);
 	while (iter != NULL)
 	{
 		ip = (t_ip*)iter->content;
@@ -48,6 +49,7 @@ t_port *get_next_untested_port(t_nmap *nmap, int *port, char **ip_addr)
 					ip->ports[i].state = STATE_BEING_TESTED;
 					*port = ip->ports[i].id;
 					*ip_addr = ip->str;
+					pthread_mutex_unlock(&nmap->mutex);
 					return (&ip->ports[i]);
 				}
 				++i;
@@ -55,31 +57,35 @@ t_port *get_next_untested_port(t_nmap *nmap, int *port, char **ip_addr)
 		}
 		iter = iter->next;
 	}
+	pthread_mutex_unlock(&nmap->mutex);
 	return (NULL);
 }
 
-void set_port_as_tested(t_port *port, t_pstate new_state)
+void set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate new_state)
 {
 	port->state = new_state;
 
 	// test if all the ports has been tested
 	int i;
 	i = 0;
+	pthread_mutex_lock(&nmap->mutex);
 	while (port->parent->ports[i].id != 0)
 	{
 		if (port->parent->ports[i].state == STATE_UNTESTED) {
 			port->parent->tested = 0;
+			pthread_mutex_unlock(&nmap->mutex);
 			return ;
 		}
 		++i;
 	}
 	port->parent->tested = 1;
+	pthread_mutex_unlock(&nmap->mutex);
 }
 
-void test_one_port(t_port *port, char *ip_addr)
+void test_one_port(t_nmap *nmap, t_port *port, char *ip_addr)
 {
 	printf("Test port %s:%d by %ld\n", ip_addr, port->id, (long) pthread_self());
-	set_port_as_tested(port, STATE_OPEN);
+	set_port_as_tested(nmap, port, STATE_OPEN);
 }
 
 void *thread_fn(void *v_nmap)
@@ -91,7 +97,7 @@ void *thread_fn(void *v_nmap)
 	t_nmap *nmap = (t_nmap*)v_nmap;
 	port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
 	while (port != NULL) {
-		test_one_port(port, ip_addr);
+		test_one_port(nmap, port, ip_addr);
 		port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
 	}
 	pthread_exit((void*) nmap);
@@ -112,6 +118,7 @@ int main (int argc, char *argv[])
 	parse_ports(nmap);
 	print_options(&nmap->opts);
 	nmap->progname = ft_strdup(argv[0]);
+	pthread_mutex_init(&nmap->mutex, NULL);
 	// nmap->hostname = ft_strdup(nmap->opts.);
 	// addr_info(nmap);
 
@@ -143,5 +150,6 @@ int main (int argc, char *argv[])
 
 	free_nmap(&nmap);
 	printf("end of prog\n");
+	pthread_mutex_destroy(&nmap->mutex);
 	pthread_exit(NULL);
 }
