@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:39 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/27 14:16:38 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/27 16:40:04 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,18 +26,74 @@ void quit(t_nmap *nmap, int quit_status)
 	exit(quit_status);
 }
 
-int get_next_untested_port(t_nmap *nmap)
+t_port *get_next_untested_port(t_nmap *nmap, int *port, char **ip_addr)
 {
-	static int buf = 0;
-	return (buf++);
-	(void)nmap;
+	t_list	*iter;
+	t_ip	*ip;
+	int		i;
+
+	//for each ip
+	iter = nmap->opts.ips;
+	while (iter != NULL)
+	{
+		ip = (t_ip*)iter->content;
+		if (!ip->tested) {
+
+			// for each port to test of this ip
+			i = 0;
+			while (ip->ports[i].id != 0) {
+
+				// return the untested port
+				if (ip->ports[i].state == STATE_UNTESTED) {
+					ip->ports[i].state = STATE_BEING_TESTED;
+					*port = ip->ports[i].id;
+					*ip_addr = ip->str;
+					return (&ip->ports[i]);
+				}
+				++i;
+			}
+		}
+		iter = iter->next;
+	}
+	return (NULL);
 }
 
-void *test_port(void *v_nmap)
+void set_port_as_tested(t_port *port, t_pstate new_state)
 {
+	port->state = new_state;
+
+	// test if all the ports has been tested
+	int i;
+	i = 0;
+	while (port->parent->ports[i].id != 0)
+	{
+		if (port->parent->ports[i].state == STATE_UNTESTED) {
+			port->parent->tested = 0;
+			return ;
+		}
+		++i;
+	}
+	port->parent->tested = 1;
+}
+
+void test_one_port(t_port *port, char *ip_addr)
+{
+	printf("Test port %s:%d by %ld\n", ip_addr, port->id, (long) pthread_self());
+	set_port_as_tested(port, STATE_OPEN);
+}
+
+void *thread_fn(void *v_nmap)
+{
+	int		port_to_test;
+	char	*ip_addr;
+	t_port	*port;
+
 	t_nmap *nmap = (t_nmap*)v_nmap;
-	int port = get_next_untested_port(nmap);
-	printf("Test port: %d\n", port);
+	port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
+	while (port != NULL) {
+		test_one_port(port, ip_addr);
+		port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
+	}
 	pthread_exit((void*) nmap);
 }
 
@@ -67,7 +123,7 @@ int main (int argc, char *argv[])
 	threads = (pthread_t*)malloc(nmap->opts.nb_thread * sizeof(pthread_t));
 	for (t = 0; t < nmap->opts.nb_thread ; t++) {
 		printf("Main: creating thread %ld\n", t);
-		rc = pthread_create(&threads[t], &attr, test_port, (void *)nmap);
+		rc = pthread_create(&threads[t], &attr, thread_fn, (void *)nmap);
 		if (rc) {
 			printf("ERROR; return code from pthread_create() is %d\n", rc);
 			exit(-1);

@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:09 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/27 14:02:07 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/27 16:38:57 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,16 +57,20 @@ typedef enum	e_scan
 typedef enum	e_pstate
 {
 	STATE_UNTESTED,
+	STATE_BEING_TESTED,
 	STATE_OPEN,
 	STATE_CLOSE,
 	STATE_FILTERING,
 	STATE_UNFILTERED
 }				t_pstate;
 
+struct s_ip;
+
 typedef struct	s_port
 {
 	int			id;
 	t_pstate	state;
+	struct s_ip	*parent;
 }				t_port;
 
 typedef struct	s_ip
@@ -108,5 +112,17 @@ void			ft_ping(t_nmap *nmap);
 void			parse_ports(t_nmap *nmap);
 void			quit(t_nmap *nmap, int quit_status);
 void			free_options(t_options *opt);
+
+/*
+** Return the next port to test.
+**
+** port:	the value of this pointer will be set to the port to test.
+** ip_addr:	the value of this pointer will be set to the ip address to test.
+**
+** return:	NULL if all ports has been tested. A pointer to the port to test
+** 			otherwise.
+*/
+t_port			 *get_next_untested_port(t_nmap *nmap,
+											int *port, char **ip_addr);
 
 #endif

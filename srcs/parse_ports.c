@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/27 12:11:50 by gbersac           #+#    #+#             */
-/*   Updated: 2016/01/27 14:57:03 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/27 16:11:37 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,11 +21,11 @@ void port_format_error(t_nmap *nmap)
 		quit(nmap, EXIT_FAILURE);
 }
 
-static void set_port_id(t_port *ports, int id, int index)
+static void set_port_id(t_port *port, int id, int index)
 {
 	if (id <= 0)
 		return ;
-	ports[index].id = id;
+	port[index].id = id;
 }
 
 static t_port *ports_set(t_nmap *nmap, char *ports_str, int *ttl_port)
@@ -117,13 +117,10 @@ void parse_ports(t_nmap *nmap)
 
 	// get the ports to test for each ip address
 	ports_str = nmap->opts.ports;
-	printf("parse_ports %s\n", ports_str);
 	if (strstr(ports_str, "-"))
 		ports_array = ports_set(nmap, ports_str, &nb_port);
 	else
 		ports_array = ports_list(nmap, ports_str, &nb_port);
-	printf("nb_port %d\n", nb_port);
-	print_ports(ports_array);
 
 	// add ports copy to all
 	t_list *iter = nmap->opts.ips;
@@ -131,6 +128,13 @@ void parse_ports(t_nmap *nmap)
 		t_ip *ip = (t_ip*)iter->content;
 		ip->ports = (t_port*)malloc((nb_port + 1) * sizeof(t_port));
 		memcpy(ip->ports, ports_array, (nb_port + 1) * sizeof(t_port));
+
+		// set this ip as parent of those ports
+		int i = 0;
+		while (ip->ports[i].id != 0) {
+			ip->ports[i].parent = ip;
+			++i;
+		}
 		iter = iter->next;
 	}
 }
