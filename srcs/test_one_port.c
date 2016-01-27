@@ -58,7 +58,7 @@ void test_one_port(t_nmap *nmap, t_port *port, char *ip_addr)
     //open socket
     sock = create_socket();//ret
 	printf("Test port %s:%d by %ld\n", ip_addr, port->id, (long) pthread_self());
-    filter = ft_strjoin("src ", port->parent->hostip);
+    filter = ft_strjoin("src ", ip_addr);
 	dev = pcap_lookupdev(errbuf);
 	if (dev == NULL)
 	{
@@ -95,15 +95,14 @@ void test_one_port(t_nmap *nmap, t_port *port, char *ip_addr)
     t_pstate port_state = STATE_BEING_TESTED;
     r= 0 ;
     ft_ping(port, sock);
-	r = pcap_dispatch(handle, 0, ft_callback, (u_char*)&port_state);
+    r = pcap_dispatch(handle, 0, ft_callback, (u_char*)&port_state);
 //	if (r == -1)
 //	    fprintf(stderr, "port %d dispatch ret [%d] %s\n", nmap->tport, r, strerror(errno));
-	if (r == 0)
-	{
-		port_state = STATE_FILTERING;
+    if (r == 0)
+    {
+	port_state = STATE_FILTERING;
 	    // ans->status = STATE_FILTERING;
 	    //fprintf(stderr, "port %d filtered\n", port->id);
-	}
-	set_port_as_tested(nmap, port, port_state);
-
+    }
+    set_port_as_tested(nmap, port, port_state);
 }

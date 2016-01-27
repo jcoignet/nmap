@@ -65,7 +65,7 @@ t_port *get_next_untested_port(t_nmap *nmap, int *port, char **ip_addr)
 				if (ip->ports[i].state == STATE_UNTESTED) {
 					ip->ports[i].state = STATE_BEING_TESTED;
 					*port = ip->ports[i].id;
-					*ip_addr = ip->hostname;
+					*ip_addr = ip->hostip;
 					pthread_mutex_unlock(&nmap->mutex);
 					return (&ip->ports[i]);
 				}
@@ -128,6 +128,7 @@ void addr_info(t_ip *ip)
 			(void*)&(((struct sockaddr_in*)(info->ai_addr))->sin_addr.s_addr),
 			buf,IP_BUFFLEN);
 	ip->hostip = strdup(buf);
+	ip->info = info;
 }
 
 static void add_addr_info(t_nmap *nmap)
@@ -187,7 +188,14 @@ int main (int argc, char *argv[])
 		}
 		printf("Main: completed join with thread %ld having a status of %ld\n",t,(long)status);
 	}
-
+	
+	// all threads has been ended
+	t_ip *fip = nmap->opts.ips->content;
+	int i = 0;
+	while (fip->ports[i].id != 0) {
+	    printf("port %d => %d\n", fip->ports[i].id, fip->ports[i].state);
+	    i++;
+	}
 	free_nmap(&nmap);
 	printf("end of prog\n");
 	pthread_mutex_destroy(&nmap->mutex);
