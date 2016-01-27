@@ -6,11 +6,25 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:39 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/26 20:10:08 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/27 14:16:38 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ft_nmap.h"
+
+void free_nmap(t_nmap **nmap)
+{
+	free_options(&(*nmap)->opts);
+	//TODO free other options
+	free(*nmap);
+	nmap = NULL;
+}
+
+void quit(t_nmap *nmap, int quit_status)
+{
+	free_nmap(&nmap);
+	exit(quit_status);
+}
 
 int get_next_untested_port(t_nmap *nmap)
 {
@@ -39,6 +53,7 @@ int main (int argc, char *argv[])
 	// Initialize nmap
 	nmap = malloc(sizeof(t_nmap));
 	nmap->opts = parse_opt(argc, argv);
+	parse_ports(nmap);
 	print_options(&nmap->opts);
 	nmap->progname = ft_strdup(argv[0]);
 	// nmap->hostname = ft_strdup(nmap->opts.);
@@ -70,6 +85,7 @@ int main (int argc, char *argv[])
 		printf("Main: completed join with thread %ld having a status of %ld\n",t,(long)status);
 	}
 
+	free_nmap(&nmap);
 	printf("end of prog\n");
 	pthread_exit(NULL);
 }

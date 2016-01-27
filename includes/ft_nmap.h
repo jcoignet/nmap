@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:09 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/26 19:57:19 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/27 14:02:07 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,32 @@ typedef enum	e_scan
 	SCAN_UDP
 }				t_scan;
 
+typedef enum	e_pstate
+{
+	STATE_UNTESTED,
+	STATE_OPEN,
+	STATE_CLOSE,
+	STATE_FILTERING,
+	STATE_UNFILTERED
+}				t_pstate;
+
+typedef struct	s_port
+{
+	int			id;
+	t_pstate	state;
+}				t_port;
+
+typedef struct	s_ip
+{
+	char		*str;
+	t_port		*ports;
+
+	/*
+	** true if all ports of this ip has been tested.
+	*/
+	int			tested;
+}				t_ip;
+
 typedef struct	s_options
 {
 	char		*ports;
@@ -79,5 +105,8 @@ typedef struct	s_nmap
 t_options		parse_opt(int ac, char **av);
 void			print_options(t_options *opt);
 void			ft_ping(t_nmap *nmap);
+void			parse_ports(t_nmap *nmap);
+void			quit(t_nmap *nmap, int quit_status);
+void			free_options(t_options *opt);
 
 #endif

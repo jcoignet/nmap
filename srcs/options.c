@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/24 17:22:23 by gbersac           #+#    #+#             */
-/*   Updated: 2016/01/26 20:08:47 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/27 14:19:49 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,6 @@ static void help(t_options *opt)
 
 static int update_ports(t_options *opt, char *av)
 {
-	printf("update_ports %s\n", av);
 	if (av == NULL || av[0] == '-')
 		return (-1);
 	opt->ports = strdup(av);
@@ -79,6 +78,11 @@ static int update_nb_thread(t_options *opt, char *av)
 
 static void add_one_ip(t_options *opt, char *ip)
 {
+	t_ip	*new_ip;
+
+	new_ip = (t_ip*)malloc(sizeof(t_ip));
+	bzero(new_ip, sizeof(t_ip));
+	new_ip->str = strdup(ip);
 	ft_push_back(&opt->ips, ip, strlen(ip));
 }
 
