@@ -27,7 +27,7 @@ libft:
 	@$(MAKE) --directory=$@
 
 $(NAME): $(OBJ) libft
-	$(GCC) -o $(NAME) $(OBJ) -lpcap -Llibft -lft
+	$(GCC) -o $(NAME) $(OBJ) -lpcap -lpthread -Llibft -lft
 
 $(OBJ): $(SRC)
 	$(GCC) -c $(SRC) -I$(INCLUDES) -I./libft/inc

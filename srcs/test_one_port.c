@@ -3,15 +3,15 @@
 void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *packet)
 {
     struct tcphdr   *tcph;
-    uint16_t	src_port, dst_port;
+    //uint16_t	src_port, dst_port;
     t_pstate *port_state = (t_pstate*)user;
 //    struct iphdr    *iph;
 
 //    iph = (struct iphdr*)(packet + sizeof(struct ether_header));
     tcph = (struct tcphdr*)(packet + sizeof(struct iphdr) + sizeof(struct ether_header));
 
-    src_port = ntohs(tcph->source);//ntohs(tcph->source);
-    dst_port = ntohs(tcph->dest);
+    //src_port = ntohs(tcph->source);//ntohs(tcph->source);
+    //dst_port = ntohs(tcph->dest);
     /*struct servent  *service = getservbyport(tcph->source, NULL);
     if (service != NULL)
     {
@@ -28,7 +28,7 @@ void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *p
     if (tcph->syn == 1 && tcph->ack == 1)//check bitwise ?
 		*port_state = STATE_OPEN;
     else if (tcph->ack == 1 && tcph->rst == 1)
-		*port_state = STATE_CLOSED;
+		*port_state = STATE_CLOSE;
     (void)pkthdr;
     (void)packet;
 }
@@ -53,12 +53,12 @@ void test_one_port(t_nmap *nmap, t_port *port, char *ip_addr)
     pcap_t	*handle;
     struct bpf_program fp;	/* The compiled filter expression */
     char    *filter;
-    int	    r, socket;
+    int	    r, sock;
 
     //open socket
-    socket = create_socket();//ret
+    sock = create_socket();//ret
 	printf("Test port %s:%d by %ld\n", ip_addr, port->id, (long) pthread_self());
-    filter = ft_strjoin("src ", nmap->hostip);
+    filter = ft_strjoin("src ", port->parent->hostip);
 	dev = pcap_lookupdev(errbuf);
 	if (dev == NULL)
 	{
@@ -94,7 +94,7 @@ void test_one_port(t_nmap *nmap, t_port *port, char *ip_addr)
     // ans->service = NULL;
     t_pstate port_state = STATE_BEING_TESTED;
     r= 0 ;
-    ft_ping(port, ip_addr);
+    ft_ping(port, sock);
 	r = pcap_dispatch(handle, 0, ft_callback, (u_char*)&port_state);
 //	if (r == -1)
 //	    fprintf(stderr, "port %d dispatch ret [%d] %s\n", nmap->tport, r, strerror(errno));

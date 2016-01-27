@@ -110,11 +110,12 @@ typedef struct	s_nmap
 
 t_options		parse_opt(int ac, char **av);
 void			print_options(t_options *opt);
-void			ft_ping(t_port *port, char *ip_addr);
+void			ft_ping(t_port *port, int sock);
 void			parse_ports(t_nmap *nmap);
 void			quit(t_nmap *nmap, int quit_status);
 void			free_options(t_options *opt);
 void			test_one_port(t_nmap *nmap, t_port *port, char *ip_addr);
+void set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate new_state);
 
 /*
 ** Return the next port to test.

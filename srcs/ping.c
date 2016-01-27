@@ -57,7 +57,7 @@ struct pseudo_header
 	u_int16_t tcp_length;
 };
 
-void		ft_ping(t_port *port, char *ip_addr)
+void		ft_ping(t_port *port, int sock)
 {
 	char	sendbuf[IP_MAXPACKET];
 	int	len;
@@ -115,7 +115,7 @@ void		ft_ping(t_port *port, char *ip_addr)
 	ft_memcpy(pseudogram, (char*)&psh, sizeof(struct pseudo_header));
 	ft_memcpy(pseudogram + sizeof(struct pseudo_header), tcph, sizeof(struct tcphdr));
 	tcph->check = ft_checksum((u_short*)pseudogram, psize);
-	if ((sent = sendto(socket, sendbuf, len, 0,
+	if ((sent = sendto(sock, sendbuf, len, 0,
 			port->parent->info->ai_addr, port->parent->info->ai_addrlen)) < 0)
 	{
 		printf("Error: sendto failed.\n");
