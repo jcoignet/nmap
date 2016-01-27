@@ -41,19 +41,15 @@ void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *p
 int	create_socket(t_scan scan)
 {
 	int	sock;
-	int	i = 1;
 
-	if (scan != SCAN_UDP)
+	if (scan == SCAN_UDP)
 	{
-	    if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) == -1)
-	     return -1;
-
-	    if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &i, sizeof(i)) < 0)
-	     return -1;
+	    if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_UDP)) == -1)
+		return -1;
 	}
 	else
 	{
-	    if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_UDP)) == -1)
+	    if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP)) == -1)
 		return -1;
 	}
 

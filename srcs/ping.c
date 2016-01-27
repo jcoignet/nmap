@@ -105,7 +105,6 @@ void		ft_ping(t_port *port, int sock, char *ip_addr, t_scan scan)
 	char	sendbuf[IP_MAXPACKET];
 	int	len;
 	int	sent;
-	struct iphdr *iph;
 	struct tcphdr *tcph;
 	struct sockaddr_in sin;
 
@@ -113,21 +112,8 @@ void		ft_ping(t_port *port, int sock, char *ip_addr, t_scan scan)
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port->id);
 	sin.sin_addr.s_addr = inet_addr(ip_addr);
-	iph = (struct iphdr*)sendbuf;
-	tcph = (struct tcphdr*)(sendbuf + sizeof(struct iphdr));
-	len = sizeof(struct iphdr) + sizeof(struct tcphdr);
-	iph->ihl = 5;
-	iph->version = 4;
-	iph->tos = 0;
-	iph->tot_len = len;
-	iph->id = htons(1);
-	iph->frag_off = 0;
-	iph->ttl = 255;
-	iph->protocol = IPPROTO_TCP;
-	iph->check = 0;
-	iph->saddr = inet_addr("192.168.0.8");
-	iph->daddr = sin.sin_addr.s_addr;
-	iph->check = ft_checksum((u_short*)sendbuf, len);
+	tcph = (struct tcphdr*)sendbuf;
+	len = sizeof(struct tcphdr);
 
 	tcph->source = htons(port->src_port);//src port
 	tcph->dest = htons(port->id);
