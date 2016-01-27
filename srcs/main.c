@@ -146,6 +146,21 @@ static void add_addr_info(t_nmap *nmap)
 }
 
 
+void	print_state_name(t_pstate state)
+{
+    const char    *names[] = {
+	"UNTESTED",
+	"BEING_TESTED",
+	"OPEN",
+	"CLOSED",
+	"FILTERED",
+	"UNFILTERED",
+	"OPEN|FILTERED"
+    };
+
+    printf("%s\n", names[state]);
+}
+
 int main (int argc, char *argv[])
 {
 	pthread_t *threads;
@@ -197,7 +212,8 @@ int main (int argc, char *argv[])
 	t_ip *fip = nmap->opts.ips->content;
 	int i = 0;
 	while (fip->ports[i].id != 0) {
-	    printf("port %d => %d\n", fip->ports[i].id, fip->ports[i].state);
+	    printf("port %d => ", fip->ports[i].id);
+	    print_state_name(fip->ports[i].state);
 	    i++;
 	}
 	free_nmap(&nmap);
