@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:09 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/27 17:01:27 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/27 18:05:44 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 # include <unistd.h>
 # include <arpa/inet.h>
 # include <netinet/ip.h>
+# include <netinet/tcp.h>
 # include <netinet/ip_icmp.h>
 # include <sys/time.h>
 # include <sys/socket.h>
@@ -69,19 +70,22 @@ struct s_ip;
 typedef struct	s_port
 {
 	int			id;
+	int src_port;
 	t_pstate	state;
 	struct s_ip	*parent;
 }				t_port;
 
 typedef struct	s_ip
 {
-	char		*str;
+	char		*hostname;
+	char		*hostip;
 	t_port		*ports;
 
 	/*
 	** true if all ports of this ip has been tested.
 	*/
 	int			tested;
+    struct addrinfo	*info;
 }				t_ip;
 
 typedef struct	s_options
@@ -98,21 +102,19 @@ typedef struct	s_options
 
 typedef struct	s_nmap
 {
-    int		    	sock;
     char	    	*progname;
-    char	    	*hostname;
-    char			*hostip;
-    struct addrinfo	*info;
     t_options		opts;
     pthread_mutex_t	mutex;
+    int		    	sport;
 }				t_nmap;
 
 t_options		parse_opt(int ac, char **av);
 void			print_options(t_options *opt);
-void			ft_ping(t_nmap *nmap);
+void			ft_ping(t_port *port, char *ip_addr);
 void			parse_ports(t_nmap *nmap);
 void			quit(t_nmap *nmap, int quit_status);
 void			free_options(t_options *opt);
+void			test_one_port(t_nmap *nmap, t_port *port, char *ip_addr);
 
 /*
 ** Return the next port to test.

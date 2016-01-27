@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/24 17:22:23 by gbersac           #+#    #+#             */
-/*   Updated: 2016/01/27 15:57:26 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/27 17:48:10 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@ void print_options(t_options *opt)
 	t_list *iter = opt->ips;
 	while (iter != NULL)
 	{
-		printf("%s ", ((t_ip*)iter->content)->str);
+		printf("%s ", ((t_ip*)iter->content)->hostname);
 		iter = iter->next;
 	}
 	printf("\nports: %s\n", opt->ports);
@@ -87,7 +87,7 @@ static void add_one_ip(t_options *opt, char *ip)
 
 	new_ip = (t_ip*)malloc(sizeof(t_ip));
 	bzero(new_ip, sizeof(t_ip));
-	new_ip->str = strdup(ip);
+	new_ip->hostname = strdup(ip);
 	ft_push_back(&opt->ips, new_ip, sizeof(t_ip));
 }
 

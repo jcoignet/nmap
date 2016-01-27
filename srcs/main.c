@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:39 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/27 17:11:55 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/27 17:47:44 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,10 +16,26 @@ void free_nmap(t_nmap **nmap)
 {
 	free_options(&(*nmap)->opts);
 	//TODO free other options
-	pthread_mutex_destroy(&nmap->mutex);
+	pthread_mutex_destroy(&(*nmap)->mutex);
 	free(*nmap);
 	nmap = NULL;
 }
+
+// void display_ip_header()
+// {
+//	struct hostent		*client;
+//	 char			*fqdn;
+// 	((struct sockaddr_in*)(nmap->info->ai_addr))->sin_port = nmap->tport;
+// 	client = gethostbyaddr((void*)&(((struct sockaddr_in*)(info->ai_addr))->sin_addr.s_addr),
+// 		sizeof(((struct sockaddr_in*)(info->ai_addr))->sin_addr.s_addr), AF_INET);
+// 	if (client == NULL || client->h_name == NULL)
+// 	    fqdn = strdup(nmap->hostname);
+// 	else
+// 	    fqdn = strdup(client->h_name);
+// 	printf("ft_nmap scan report for %s (%s)\n", nmap->hostname, buf);
+// 	//host is up + ping
+// 	printf("rDNS record for %s: %s\n\n", buf, fqdn);
+// }
 
 void quit(t_nmap *nmap, int quit_status)
 {
@@ -49,7 +65,7 @@ t_port *get_next_untested_port(t_nmap *nmap, int *port, char **ip_addr)
 				if (ip->ports[i].state == STATE_UNTESTED) {
 					ip->ports[i].state = STATE_BEING_TESTED;
 					*port = ip->ports[i].id;
-					*ip_addr = ip->str;
+					*ip_addr = ip->hostname;
 					pthread_mutex_unlock(&nmap->mutex);
 					return (&ip->ports[i]);
 				}
@@ -83,12 +99,6 @@ void set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate new_state)
 	pthread_mutex_unlock(&nmap->mutex);
 }
 
-void test_one_port(t_nmap *nmap, t_port *port, char *ip_addr)
-{
-	printf("Test port %s:%d by %ld\n", ip_addr, port->id, (long) pthread_self());
-	set_port_as_tested(nmap, port, STATE_OPEN);
-}
-
 void *thread_fn(void *v_nmap)
 {
 	int		port_to_test;
@@ -104,6 +114,33 @@ void *thread_fn(void *v_nmap)
 	pthread_exit((void*) nmap);
 }
 
+void addr_info(t_ip *ip)
+{
+	struct addrinfo		*info;
+	char			buf[IP_BUFFLEN];
+
+	if (getaddrinfo(ip->hostname, NULL, NULL, &info) != 0)
+	{
+		fprintf(stderr, "ft_nmap: unknown host %s\n", ip->hostname);
+		exit(EXIT_FAILURE);
+	}
+	inet_ntop(AF_INET,
+			(void*)&(((struct sockaddr_in*)(info->ai_addr))->sin_addr.s_addr),
+			buf,IP_BUFFLEN);
+	ip->hostip = strdup(buf);
+}
+
+static void add_addr_info(t_nmap *nmap)
+{
+	t_list *iter = nmap->opts.ips;
+	while (iter != NULL)
+	{
+		addr_info(iter->content);
+		iter = iter->next;
+	}
+}
+
+
 int main (int argc, char *argv[])
 {
 	pthread_t *threads;
@@ -115,11 +152,13 @@ int main (int argc, char *argv[])
 
 	// Initialize nmap
 	nmap = malloc(sizeof(t_nmap));
+	nmap->sport = 80;
 	nmap->opts = parse_opt(argc, argv);
 	parse_ports(nmap);
 	print_options(&nmap->opts);
 	nmap->progname = ft_strdup(argv[0]);
 	pthread_mutex_init(&nmap->mutex, NULL);
+	add_addr_info(nmap);
 	// nmap->hostname = ft_strdup(nmap->opts.);
 	// addr_info(nmap);
 
