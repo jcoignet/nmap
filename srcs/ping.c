@@ -57,8 +57,12 @@ struct pseudo_header
 	u_int16_t length;
 };
 
-void	    udp_ping(t_port *port, int sock, char *ip_addr)
-{
+void	    udp_ping(
+	int port,
+	int sock,
+	char *ip_addr,
+	struct addrinfo info
+) {
     char	sendbuf[sizeof(struct udphdr)];
     int	len;
     int	sent;
@@ -68,11 +72,11 @@ void	    udp_ping(t_port *port, int sock, char *ip_addr)
     len = sizeof(struct udphdr);
     bzero(sendbuf, IP_MAXPACKET);
     sin.sin_family = AF_INET;
-    sin.sin_port = htons(port->id);
+    sin.sin_port = htons(port);
     sin.sin_addr.s_addr = inet_addr(ip_addr);
     udph = (struct udphdr*)sendbuf;
-    udph->source = htons(port->src_port);
-    udph->dest = htons (port->id);
+    udph->source = htons(SRC_PORT);
+    udph->dest = htons (port);
     udph->len = htons(8);
     udph->check = 0; //leave checksum 0 now, filled later by pseudo header
 
@@ -88,17 +92,22 @@ void	    udp_ping(t_port *port, int sock, char *ip_addr)
     memcpy(pseudogram + sizeof(struct pseudo_header) , udph , sizeof(struct udphdr));
     udph->check = ft_checksum((u_short*) pseudogram , psize);
     if ((sent = sendto(sock, sendbuf, len, 0,
-			port->parent->info->ai_addr, port->parent->info->ai_addrlen)) < 0)
+			info.ai_addr, info.ai_addrlen)) < 0)
 	printf("Error: sendto failed.\n");
     if (sent != len)
 	printf("Warning: sent %d expected %d\n", sent, len);
 }
 
-void		ft_ping(t_port *port, int sock, char *ip_addr, t_scan scan)
-{
+void ft_ping(
+	int port,
+	int sock,
+	char *ip_addr,
+	t_scan scan,
+	struct addrinfo info
+) {
 	if (scan == SCAN_UDP)
 	{
-	    udp_ping(port, sock, ip_addr);
+	    udp_ping(port, sock, ip_addr, info);
 	    return ;
 	}
 
@@ -111,12 +120,12 @@ void		ft_ping(t_port *port, int sock, char *ip_addr, t_scan scan)
 	len = sizeof(struct tcphdr);
 	bzero(sendbuf, len);
 	sin.sin_family = AF_INET;
-	sin.sin_port = htons(port->id);
+	sin.sin_port = htons(port);
 	sin.sin_addr.s_addr = inet_addr(ip_addr);
 	tcph = (struct tcphdr*)sendbuf;
 
-	tcph->source = htons(port->src_port);//src port
-	tcph->dest = htons(port->id);
+	tcph->source = htons(SRC_PORT);//src port
+	tcph->dest = htons(port);
 	tcph->seq = 0;
 	tcph->ack_seq = 0;
 	tcph->doff = 5;
@@ -144,7 +153,7 @@ void		ft_ping(t_port *port, int sock, char *ip_addr, t_scan scan)
 	ft_memcpy(pseudogram + sizeof(struct pseudo_header), tcph, sizeof(struct tcphdr));
 	tcph->check = ft_checksum((u_short*)pseudogram, psize);
 	if ((sent = sendto(sock, sendbuf, len, 0,
-			port->parent->info->ai_addr, port->parent->info->ai_addrlen)) < 0)
+			info.ai_addr, info.ai_addrlen)) < 0)
 		printf("Error: sendto failed.\n");
 	if (sent != len)
 		printf("Warning: sent %d expected %d\n", sent, len);

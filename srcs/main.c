@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:39 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/27 17:47:44 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/28 18:40:41 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,17 +101,22 @@ void set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate new_state)
 
 void *thread_fn(void *v_nmap)
 {
-	int		port_to_test;
-	char	*ip_addr;
-	t_port	*port;
+	int			port_to_test;
+	char		*ip_addr;
+	t_port		*port;
+	t_pstate	res;
 
 	t_nmap *nmap = (t_nmap*)v_nmap;
 	port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
 	while (port != NULL) {
+		printf("test port %s:%d\n", ip_addr, port->id);
 	    if (nmap->opts.scans[SCAN_UDP] == 1)//TMP
-		test_one_port(nmap, port, ip_addr, SCAN_UDP);
+			res = test_one_port(port->id, ip_addr,
+					*port->parent->info, SCAN_UDP);
 	    else
-		test_one_port(nmap, port, ip_addr, SCAN_SYN);
+			res = test_one_port(port->id, ip_addr,
+					*port->parent->info, SCAN_SYN);
+	    set_port_as_tested(nmap, port, res);
 	    port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
 	}
 	printf("thread stoping port = null ? %d\n", port == NULL);
@@ -207,7 +212,7 @@ int main (int argc, char *argv[])
 		}
 		printf("Main: completed join with thread %ld having a status of %ld\n",t,(long)status);
 	}
-	
+
 	// all threads has been ended
 	t_ip *fip = nmap->opts.ips->content;
 	int i = 0;
@@ -216,6 +221,7 @@ int main (int argc, char *argv[])
 	    print_state_name(fip->ports[i].state);
 	    i++;
 	}
+
 	free_nmap(&nmap);
 	printf("end of prog\n");
 	pthread_mutex_destroy(&nmap->mutex);

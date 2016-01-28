@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:09 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/27 18:05:44 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/28 19:11:42 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,8 @@
 # define PING_DATALEN 56
 # define ICMP_HEADER_LEN 8
 # define NB_SCAN 6
+# define SRC_PORT 80
+# define PCAP_TIMEOUT 1000
 
 typedef enum	e_scan
 {
@@ -58,7 +60,7 @@ typedef enum	e_scan
 
 typedef enum	e_pstate
 {
-	STATE_UNTESTED,
+	STATE_UNTESTED = 0,
 	STATE_BEING_TESTED,
 	STATE_OPEN,
 	STATE_CLOSED,
@@ -78,7 +80,7 @@ typedef struct	s_callback_data
 typedef struct	s_port
 {
 	int			id;
-	int src_port;
+	int			src_port;
 	t_pstate	state;
 	struct s_ip	*parent;
 }				t_port;
@@ -118,12 +120,14 @@ typedef struct	s_nmap
 
 t_options		parse_opt(int ac, char **av);
 void			print_options(t_options *opt);
-void			ft_ping(t_port *port, int sock, char *ip_addr, t_scan scan);
+void			ft_ping(int port, int sock, char *ip_addr, t_scan scan,
+						struct addrinfo info);
 void			parse_ports(t_nmap *nmap);
 void			quit(t_nmap *nmap, int quit_status);
 void			free_options(t_options *opt);
-void			test_one_port(t_nmap *nmap, t_port *port, char *ip_addr, t_scan scan);
-void set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate new_state);
+t_pstate 		test_one_port(int port, char *ip_addr,
+								struct addrinfo addrinfo, t_scan scan);
+void			set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate new_state);
 
 /*
 ** Return the next port to test.
