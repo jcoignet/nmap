@@ -112,9 +112,9 @@ void *thread_fn(void *v_nmap)
 		test_one_port(nmap, port, ip_addr, SCAN_UDP);
 	    else
 		test_one_port(nmap, port, ip_addr, SCAN_SYN);
-
 	    port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
 	}
+	printf("thread stoping port = null ? %d\n", port == NULL);
 	pthread_exit((void*) nmap);
 }
 

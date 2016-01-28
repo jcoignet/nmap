@@ -71,43 +71,44 @@ void test_one_port(t_nmap *nmap, t_port *port, char *ip_addr, t_scan scan)
 
     printf("Test port %s:%d by %ld\n", ip_addr, port->id, (long) pthread_self());
     filter = ft_strjoin("src ", ip_addr);
+    filter = ft_strjoin(filter, " and src port ");
+    filter = ft_strjoin(filter, ft_itoa(port->id));
 	dev = pcap_lookupdev(errbuf);
 	if (dev == NULL)
 	{
 		fprintf(stderr, "Couldn't find default device: %s\n", errbuf);
-		exit(EXIT_FAILURE);
+//		exit(EXIT_FAILURE);
 	}
 	if (pcap_lookupnet(dev, &netp, &maskp, errbuf) == -1)
 	{
 		fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev, errbuf);
-		exit(EXIT_FAILURE);
+//		exit(EXIT_FAILURE);
 	}
 
 	handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
 	if (handle == NULL)
 	{
 		fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
-		exit(EXIT_FAILURE);
+//		exit(EXIT_FAILURE);
 	}
 
     if (pcap_compile(handle, &fp, filter, 0, netp) == -1)
     {
     	fprintf(stderr, "Couldn't parse filter %s: %s\n", filter, pcap_geterr(handle));
-    	exit(EXIT_FAILURE);
+ //   	exit(EXIT_FAILURE);
     }
     if (pcap_setfilter(handle, &fp) == -1)
     {
     	fprintf(stderr, "Couldn't install filter %s: %s\n", filter, pcap_geterr(handle));
-    	exit(EXIT_FAILURE);
+//    	exit(EXIT_FAILURE);
     }
 
     t_callback_data cdata;
 
     cdata.state = STATE_BEING_TESTED;
     cdata.scan = scan;
-    r= 0 ;
+    r = 0;
     ft_ping(port, sock, ip_addr, scan);
-    //not udp or anyway i need scan for callbak or multiple callbak fn
     r = pcap_dispatch(handle, 0, ft_callback, (u_char*)&cdata);
 	if (r == -1)
 	    fprintf(stderr, "port %d dispatch ret [%d] %s\n", port->id, r, strerror(errno));
@@ -120,7 +121,9 @@ void test_one_port(t_nmap *nmap, t_port *port, char *ip_addr, t_scan scan)
 	    // ans->status = STATE_FILTERING;
 	    //fprintf(stderr, "port %d filtered\n", port->id);
     }
+    pcap_close(handle);
     free(filter);
     close(sock);
     set_port_as_tested(nmap, port, cdata.state);
+    printf("scan port %d done\n", port->id);
 }

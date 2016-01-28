@@ -59,7 +59,7 @@ struct pseudo_header
 
 void	    udp_ping(t_port *port, int sock, char *ip_addr)
 {
-    char	sendbuf[IP_MAXPACKET];
+    char	sendbuf[sizeof(struct udphdr)];
     int	len;
     int	sent;
     struct udphdr *udph;
@@ -99,21 +99,21 @@ void		ft_ping(t_port *port, int sock, char *ip_addr, t_scan scan)
 	if (scan == SCAN_UDP)
 	{
 	    udp_ping(port, sock, ip_addr);
-	    return ; //TODO
+	    return ;
 	}
 
-	char	sendbuf[IP_MAXPACKET];
+	char	sendbuf[sizeof(struct tcphdr)];
 	int	len;
 	int	sent;
 	struct tcphdr *tcph;
 	struct sockaddr_in sin;
 
-	bzero(sendbuf, IP_MAXPACKET);
+	len = sizeof(struct tcphdr);
+	bzero(sendbuf, len);
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port->id);
 	sin.sin_addr.s_addr = inet_addr(ip_addr);
 	tcph = (struct tcphdr*)sendbuf;
-	len = sizeof(struct tcphdr);
 
 	tcph->source = htons(port->src_port);//src port
 	tcph->dest = htons(port->id);
@@ -130,7 +130,7 @@ void		ft_ping(t_port *port, int sock, char *ip_addr, t_scan scan)
 	tcph->window = htons(5840);
 	tcph->check = 0;
 	tcph->urg_ptr = 0;
-	tcph->check = 0;//ft_checksum((u_short*)tcph, sizeof(struct tcphdr));
+	tcph->check = 0;
 
 	struct pseudo_header psh;
 	psh.source_address = inet_addr("192.168.0.8");
