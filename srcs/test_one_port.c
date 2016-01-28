@@ -76,13 +76,15 @@ t_pstate test_one_port(
 
 	printf("Test port %s:%d by %ld\n", ip_addr, port, (long) pthread_self());
 	asprintf(&filter, "src %s and src port %d", ip_addr, port);
-	dev = pcap_lookupdev(errbuf);
+	dev = strdup("eth0");
+	/*dev = pcap_lookupdev(errbuf);
 	if (dev == NULL)
 	{
 		fprintf(stderr, "Couldn't find default device: %s\n", errbuf);
 //		exit(EXIT_FAILURE);
-	}
+	}*/
 
+	pthread_mutex_lock(&pcap_compile_mutex);
 	if (pcap_lookupnet(dev, &netp, &maskp, errbuf) == -1)
 	{
 		fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev, errbuf);
@@ -96,19 +98,18 @@ t_pstate test_one_port(
 //		exit(EXIT_FAILURE);
 	}
 
-	pthread_mutex_lock(&pcap_compile_mutex);
 	if (pcap_compile(handle, &fp, filter, 0, netp) == -1)
 	{
 		fprintf(stderr, "Couldn't parse filter %s: %s\n", filter, pcap_geterr(handle));
  //   	exit(EXIT_FAILURE);
 	}
-	pthread_mutex_unlock(&pcap_compile_mutex);
 
 	if (pcap_setfilter(handle, &fp) == -1)
 	{
 		fprintf(stderr, "Couldn't install filter %s: %s\n", filter, pcap_geterr(handle));
 //    	exit(EXIT_FAILURE);
 	}
+	pthread_mutex_unlock(&pcap_compile_mutex);
 
 	t_callback_data cdata;
 	cdata.state = STATE_BEING_TESTED;
@@ -116,10 +117,10 @@ t_pstate test_one_port(
 
 	r = 0;
 	ft_ping(port, sock, ip_addr, scan, info);
-	sleep(3);
-		printf("test_one_port %d\n",  (int) pthread_self());
+//	sleep(3);
+	printf("test_one_port %d\n",  (int) pthread_self());
 	r = pcap_dispatch(handle, 0, ft_callback, (u_char*)&cdata);
-		printf("test_one_port++ %d\n",  (int) pthread_self());
+	printf("test_one_port++ %d\n",  (int) pthread_self());
 	if (r == -1)
 		fprintf(stderr, "port %d dispatch ret [%d] %s\n", port, r, strerror(errno));
 	if (r == 0)

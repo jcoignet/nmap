@@ -99,6 +99,7 @@ void set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate new_state)
 	pthread_mutex_unlock(&nmap->mutex);
 }
 
+int exited = 0;
 void *thread_fn(void *v_nmap)
 {
 	int			port_to_test;
@@ -113,6 +114,7 @@ void *thread_fn(void *v_nmap)
 	pthread_mutex_unlock(&nmap->mutex);
 
 	port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
+	int db= -1;
 	while (port != NULL) {
 	    if (scans[SCAN_UDP] == 1)//TMP
 			res = test_one_port(port->id, ip_addr,
@@ -121,8 +123,12 @@ void *thread_fn(void *v_nmap)
 			res = test_one_port(port->id, ip_addr,
 					*port->parent->info, SCAN_SYN);
 	    set_port_as_tested(nmap, port, res);
+	    db = port->id;
 	    port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
 	}
+	printf("exiting thread %ld port %d\n", (long)pthread_self(), db);
+	exited++;
+	printf("exited %d\n", exited);
 	pthread_exit(NULL);
 }
 
@@ -210,6 +216,7 @@ int main (int argc, char *argv[])
 	// Free attribute and wait for the other threads
 	pthread_attr_destroy(&attr);
 	for (t = 0; t < nmap->opts.nb_thread ; t++) {
+		printf("try join %ld\n", (long)(threads[t]));
 		rc = pthread_join(threads[t], &status);
 		if (rc) {
 			printf("ERROR; return code from pthread_join() is %d\n", rc);
