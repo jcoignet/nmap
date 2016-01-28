@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:39 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/28 18:40:41 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/28 20:38:11 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,12 +105,16 @@ void *thread_fn(void *v_nmap)
 	char		*ip_addr;
 	t_port		*port;
 	t_pstate	res;
+	t_scan		scans[NB_SCAN];
 
 	t_nmap *nmap = (t_nmap*)v_nmap;
+	pthread_mutex_lock(&nmap->mutex);
+	memcpy(scans, nmap->opts.scans, NB_SCAN * sizeof(t_scan));
+	pthread_mutex_unlock(&nmap->mutex);
+
 	port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
 	while (port != NULL) {
-		printf("test port %s:%d\n", ip_addr, port->id);
-	    if (nmap->opts.scans[SCAN_UDP] == 1)//TMP
+	    if (scans[SCAN_UDP] == 1)//TMP
 			res = test_one_port(port->id, ip_addr,
 					*port->parent->info, SCAN_UDP);
 	    else
@@ -119,8 +123,7 @@ void *thread_fn(void *v_nmap)
 	    set_port_as_tested(nmap, port, res);
 	    port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
 	}
-	printf("thread stoping port = null ? %d\n", port == NULL);
-	pthread_exit((void*) nmap);
+	pthread_exit(NULL);
 }
 
 void addr_info(t_ip *ip)
@@ -165,7 +168,7 @@ void	print_state_name(t_pstate state)
 
     printf("%s\n", names[state]);
 }
-
+pthread_mutex_t pcap_compile_mutex;
 int main (int argc, char *argv[])
 {
 	pthread_t *threads;
@@ -186,6 +189,8 @@ int main (int argc, char *argv[])
 	add_addr_info(nmap);
 	// nmap->hostname = ft_strdup(nmap->opts.);
 	// addr_info(nmap);
+
+	pthread_mutex_init(&pcap_compile_mutex, NULL);
 
 	// Initialize and set thread detached attribute
 	pthread_attr_init(&attr);

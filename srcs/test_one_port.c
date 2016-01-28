@@ -75,9 +75,7 @@ t_pstate test_one_port(
 	fprintf(stderr, "sock failed [%s]\n", strerror(errno));
 
 	printf("Test port %s:%d by %ld\n", ip_addr, port, (long) pthread_self());
-	filter = ft_strjoin("src ", ip_addr);
-	filter = ft_strjoin(filter, " and src port ");
-	filter = ft_strjoin(filter, ft_itoa(port));
+	asprintf(&filter, "src %s and src port %d", ip_addr, port);
 	dev = pcap_lookupdev(errbuf);
 	if (dev == NULL)
 	{
@@ -98,11 +96,13 @@ t_pstate test_one_port(
 //		exit(EXIT_FAILURE);
 	}
 
+	pthread_mutex_lock(&pcap_compile_mutex);
 	if (pcap_compile(handle, &fp, filter, 0, netp) == -1)
 	{
 		fprintf(stderr, "Couldn't parse filter %s: %s\n", filter, pcap_geterr(handle));
  //   	exit(EXIT_FAILURE);
 	}
+	pthread_mutex_unlock(&pcap_compile_mutex);
 
 	if (pcap_setfilter(handle, &fp) == -1)
 	{
@@ -111,14 +111,15 @@ t_pstate test_one_port(
 	}
 
 	t_callback_data cdata;
-
 	cdata.state = STATE_BEING_TESTED;
 	cdata.scan = scan;
+
 	r = 0;
 	ft_ping(port, sock, ip_addr, scan, info);
-		printf("test_one_port\n");
+	sleep(3);
+		printf("test_one_port %d\n",  (int) pthread_self());
 	r = pcap_dispatch(handle, 0, ft_callback, (u_char*)&cdata);
-		printf("test_one_port++\n");
+		printf("test_one_port++ %d\n",  (int) pthread_self());
 	if (r == -1)
 		fprintf(stderr, "port %d dispatch ret [%d] %s\n", port, r, strerror(errno));
 	if (r == 0)

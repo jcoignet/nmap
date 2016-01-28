@@ -6,12 +6,14 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/22 12:54:09 by jcoignet          #+#    #+#             */
-/*   Updated: 2016/01/28 19:11:42 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/28 20:37:16 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef FT_NMAP_H
 # define FT_NMAP_H
+
+#define _GNU_SOURCE
 
 # include <pcap.h>
 # include <stdio.h>
@@ -47,6 +49,8 @@
 # define NB_SCAN 6
 # define SRC_PORT 80
 # define PCAP_TIMEOUT 1000
+
+pthread_mutex_t pcap_compile_mutex;
 
 typedef enum	e_scan
 {
