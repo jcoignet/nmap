@@ -135,12 +135,27 @@ void ft_ping(
 	tcph->psh = 0;
 	tcph->rst = 0;
 	tcph->fin = 0;
-	tcph->syn = 1;
+	tcph->syn = 0;
 	tcph->window = htons(5840);
 	tcph->check = 0;
 	tcph->urg_ptr = 0;
 	tcph->check = 0;
 
+	if (scan == SCAN_SYN)
+	    tcph->syn = 1;
+	else if (scan == SCAN_FIN)
+	    tcph->fin = 1;
+	else if (scan == SCAN_XMAS)
+	{
+	    tcph->fin = 1;
+	    tcph->psh = 1;
+	    tcph->urg = 1;
+	}
+	else if (scan == SCAN_ACK)
+	    tcph->ack = 1;
+	//for NULL scan leave all bits to 0
+	//mb change srcport to  avoid conflits ?
+	
 	struct pseudo_header psh;
 	psh.source_address = inet_addr("192.168.0.8");
 	psh.dest_address = sin.sin_addr.s_addr;

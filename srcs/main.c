@@ -99,7 +99,6 @@ void set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate new_state)
 	pthread_mutex_unlock(&nmap->mutex);
 }
 
-int exited = 0;
 void *thread_fn(void *v_nmap)
 {
 	int			port_to_test;
@@ -114,7 +113,6 @@ void *thread_fn(void *v_nmap)
 	pthread_mutex_unlock(&nmap->mutex);
 
 	port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
-	int db= -1;
 	while (port != NULL) {
 	    if (scans[SCAN_UDP] == 1)//TMP
 			res = test_one_port(port->id, ip_addr,
@@ -123,12 +121,8 @@ void *thread_fn(void *v_nmap)
 			res = test_one_port(port->id, ip_addr,
 					*port->parent->info, SCAN_SYN);
 	    set_port_as_tested(nmap, port, res);
-	    db = port->id;
 	    port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
 	}
-	printf("exiting thread %ld port %d\n", (long)pthread_self(), db);
-	exited++;
-	printf("exited %d\n", exited);
 	pthread_exit(NULL);
 }
 
@@ -160,7 +154,7 @@ static void add_addr_info(t_nmap *nmap)
 }
 
 
-void	print_state_name(t_pstate state)
+void	print_state_name(t_pstate state, int port)
 {
     const char    *names[] = {
 	"UNTESTED",
@@ -172,8 +166,17 @@ void	print_state_name(t_pstate state)
 	"OPEN|FILTERED"
     };
 
-    printf("%s\n", names[state]);
+    printf("%s", names[state]);
+    struct servent  *service = getservbyport(htons(port), NULL);//shouldnt be null but tcp or udp
+    if (service != NULL)
+    {
+	printf(" %s/%s\n",
+		service->s_name, service->s_proto);
+    }
+    else
+	printf(" unknown\n");
 }
+
 pthread_mutex_t pcap_compile_mutex;
 int main (int argc, char *argv[])
 {
@@ -205,7 +208,7 @@ int main (int argc, char *argv[])
 	// Launch threads
 	threads = (pthread_t*)malloc(nmap->opts.nb_thread * sizeof(pthread_t));
 	for (t = 0; t < nmap->opts.nb_thread ; t++) {
-		printf("Main: creating thread %ld\n", t);
+//		printf("Main: creating thread %ld\n", t);
 		rc = pthread_create(&threads[t], &attr, thread_fn, (void *)nmap);
 		if (rc) {
 			printf("ERROR; return code from pthread_create() is %d\n", rc);
@@ -216,24 +219,29 @@ int main (int argc, char *argv[])
 	// Free attribute and wait for the other threads
 	pthread_attr_destroy(&attr);
 	for (t = 0; t < nmap->opts.nb_thread ; t++) {
-		printf("try join %ld\n", (long)(threads[t]));
+//		printf("try join %ld\n", (long)(threads[t]));
 		rc = pthread_join(threads[t], &status);
 		if (rc) {
 			printf("ERROR; return code from pthread_join() is %d\n", rc);
 			exit(-1);
 		}
-		printf("Main: completed join with thread %ld having a status of %ld\n",t,(long)status);
 	}
 
 	// all threads has been ended
 	t_ip *fip = nmap->opts.ips->content;
 	int i = 0;
+	int filtered = 0;
 	while (fip->ports[i].id != 0) {
-	    printf("port %d => ", fip->ports[i].id);
-	    print_state_name(fip->ports[i].state);
+	    if (fip->ports[i].state != STATE_FILTERED)
+	    {
+		printf("port %d => ", fip->ports[i].id);
+		print_state_name(fip->ports[i].state, fip->ports[i].id);
+	    }
+	    else
+		filtered++;
 	    i++;
 	}
-
+	printf("Not shown: %d filtered ports.\n", filtered);
 	free_nmap(&nmap);
 	printf("end of prog\n");
 	pthread_mutex_destroy(&nmap->mutex);

@@ -2,8 +2,10 @@
 
 void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *packet)
 {
-	printf("ft_callback\n");
 	struct tcphdr   *tcph;
+	struct iphdr	*iph;
+	struct icmphdr	*icmph;
+
 	t_callback_data *cdata = (t_callback_data*)user;
 
 	if (cdata->scan == SCAN_UDP) {
@@ -11,32 +13,20 @@ void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *p
 		return ;
 	}
 	tcph = (struct tcphdr*)(packet + sizeof(struct iphdr) + sizeof(struct ether_header));
-	//uint16_t	src_port, dst_port;
-//    struct iphdr    *iph;
-//    iph = (struct iphdr*)(packet + sizeof(struct ether_header));
+	iph = (struct iphdr*)(packet + sizeof(struct ether_header));
 
-//    src_port = ntohs(tcph->source);//ntohs(tcph->source);
-	//dst_port = ntohs(tcph->dest);
-	/*struct servent  *service = getservbyport(tcph->source, NULL);
-	if (service != NULL)
-	{
-		printf("src %d dst %d SYN %d ACK %d RST %d service %s/%s\n",
-		src_port, dst_port, tcph->syn, tcph->ack, tcph->rst, service->s_name, service->s_proto);
-	ans->service = ft_strjoin(service->s_name, service->s_proto);//+ service->s_proto !
-	}
-	else
-	{
-		printf("src %d dst %d SYN %d ACK %d RST %d\n",
-		src_port, dst_port, tcph->syn, tcph->ack, tcph->rst);
-	}*/
-
+	//if proto == TCP
+	printf("proto %d icmp %d tcp %d\n", iph->protocol, IPPROTO_ICMP, IPPROTO_TCP);
 	if (tcph->syn == 1 && tcph->ack == 1)//check bitwise ?
 		cdata->state = STATE_OPEN;
 	else if (tcph->ack == 1 && tcph->rst == 1)
 		cdata->state = STATE_CLOSED;
+	if (iph->protocol == IPPROTO_ICMP)
+	{
+	    icmph = (struct icmphdr*)(packet + sizeof(struct iphdr) + sizeof(struct ether_header));
+	    printf("ICMP Type %d Code %d\n", icmph->type, icmph->code);
+	}
 	(void)pkthdr;
-	(void)packet;
-	printf("ft_callback++\n");
 }
 
 int	create_socket(t_scan scan)
@@ -74,7 +64,7 @@ t_pstate test_one_port(
 	if (sock < 0)
 	fprintf(stderr, "sock failed [%s]\n", strerror(errno));
 
-	printf("Test port %s:%d by %ld\n", ip_addr, port, (long) pthread_self());
+//	printf("Test port %s:%d by %ld\n", ip_addr, port, (long) pthread_self());
 	asprintf(&filter, "src %s and src port %d", ip_addr, port);
 	dev = strdup("eth0");
 	/*dev = pcap_lookupdev(errbuf);
@@ -118,9 +108,7 @@ t_pstate test_one_port(
 	r = 0;
 	ft_ping(port, sock, ip_addr, scan, info);
 //	sleep(3);
-	printf("test_one_port %d\n",  (int) pthread_self());
 	r = pcap_dispatch(handle, 0, ft_callback, (u_char*)&cdata);
-	printf("test_one_port++ %d\n",  (int) pthread_self());
 	if (r == -1)
 		fprintf(stderr, "port %d dispatch ret [%d] %s\n", port, r, strerror(errno));
 	if (r == 0)
@@ -135,6 +123,5 @@ t_pstate test_one_port(
 	pcap_close(handle);
 	free(filter);
 	close(sock);
-	printf("scan port %d done\n", port);
 	return (cdata.state);
 }
