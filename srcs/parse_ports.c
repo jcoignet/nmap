@@ -6,7 +6,7 @@
 /*   By: gbersac <gbersac@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2016/01/27 12:11:50 by gbersac           #+#    #+#             */
-/*   Updated: 2016/01/27 16:11:37 by gbersac          ###   ########.fr       */
+/*   Updated: 2016/01/29 15:38:34 by gbersac          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,12 +37,12 @@ static t_port *ports_set(t_nmap *nmap, char *ports_str, int *ttl_port)
 	ret = sscanf(ports_str, "%d-%d", &begin, &end);
 	if (ret != 2 || begin > end)
 		port_format_error(nmap);
-	ports_array = (t_port*)malloc((end - begin + 1) * sizeof(t_port));
+	ports_array = (t_port*)malloc((end - begin + 2) * sizeof(t_port));
 
 	// init ports
-	bzero(ports_array, (end - begin + 1) * sizeof(t_port));
+	bzero(ports_array, (end - begin + 2) * sizeof(t_port));
 	int i;
-	for (i = 0 ; i < (end - begin) ; ++i) {
+	for (i = 0 ; i <= (end - begin) ; ++i) {
 		set_port_id(ports_array, begin + i, i);
 	}
 
