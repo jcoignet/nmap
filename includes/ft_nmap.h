@@ -48,7 +48,7 @@
 # define ICMP_HEADER_LEN 8
 # define NB_SCAN 6
 # define SRC_PORT 80
-# define PCAP_TIMEOUT 1000
+# define PCAP_TIMEOUT 3000
 
 pthread_mutex_t pcap_compile_mutex;
 
@@ -84,8 +84,9 @@ typedef struct	s_callback_data
 typedef struct	s_port
 {
 	int			id;
+	int			status;
 	int			src_port;
-	t_pstate	state;
+	t_pstate	states[NB_SCAN];
 	struct s_ip	*parent;
 }				t_port;
 
@@ -131,7 +132,7 @@ void			quit(t_nmap *nmap, int quit_status);
 void			free_options(t_options *opt);
 t_pstate 		test_one_port(int port, char *ip_addr,
 								struct addrinfo addrinfo, t_scan scan);
-void			set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate new_state);
+void			set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate *new_states);
 
 /*
 ** Return the next port to test.

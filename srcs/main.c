@@ -62,8 +62,8 @@ t_port *get_next_untested_port(t_nmap *nmap, int *port, char **ip_addr)
 			while (ip->ports[i].id != 0) {
 
 				// return the untested port
-				if (ip->ports[i].state == STATE_UNTESTED) {
-					ip->ports[i].state = STATE_BEING_TESTED;
+				if (ip->ports[i].status == 0) {
+					ip->ports[i].status = 1;
 					*port = ip->ports[i].id;
 					*ip_addr = ip->hostip;
 					pthread_mutex_unlock(&nmap->mutex);
@@ -78,17 +78,22 @@ t_port *get_next_untested_port(t_nmap *nmap, int *port, char **ip_addr)
 	return (NULL);
 }
 
-void set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate new_state)
+void set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate *new_states)
 {
-	port->state = new_state;
+	int i;
+	i = 0;
+	while (i < NB_SCAN)
+	{
+	    port->states[i] = new_states[i];
+	    i++;
+	}
 
 	// test if all the ports has been tested
-	int i;
 	i = 0;
 	pthread_mutex_lock(&nmap->mutex);
 	while (port->parent->ports[i].id != 0)
 	{
-		if (port->parent->ports[i].state == STATE_UNTESTED) {
+		if (port->parent->ports[i].status == 0) {
 			port->parent->tested = 0;
 			pthread_mutex_unlock(&nmap->mutex);
 			return ;
@@ -104,8 +109,9 @@ void *thread_fn(void *v_nmap)
 	int			port_to_test;
 	char		*ip_addr;
 	t_port		*port;
-	t_pstate	res;
+	t_pstate	res[NB_SCAN];
 	t_scan		scans[NB_SCAN];
+	int		i;
 
 	t_nmap *nmap = (t_nmap*)v_nmap;
 	pthread_mutex_lock(&nmap->mutex);
@@ -114,13 +120,16 @@ void *thread_fn(void *v_nmap)
 
 	port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
 	while (port != NULL) {
-	    if (scans[SCAN_UDP] == 1)//TMP
-			res = test_one_port(port->id, ip_addr,
-					*port->parent->info, SCAN_UDP);
-	    else
-			res = test_one_port(port->id, ip_addr,
-					*port->parent->info, SCAN_SYN);
-	    set_port_as_tested(nmap, port, res);
+	    i = 0;
+	    while (i < NB_SCAN)
+	    {
+		res[i] = STATE_UNTESTED;
+		if (scans[i] == 1)
+		    res[i] = test_one_port(port->id, ip_addr, *port->parent->info, i);
+		i++;
+	    }
+	    //todo set_port_as_tested with res[nb_scan]
+	    set_port_as_tested(nmap, port, (t_pstate*)res);
 	    port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
 	}
 	pthread_exit(NULL);
@@ -230,18 +239,32 @@ int main (int argc, char *argv[])
 	// all threads has been ended
 	t_ip *fip = nmap->opts.ips->content;
 	int i = 0;
+	int it = 0;
 	int filtered = 0;
-	while (fip->ports[i].id != 0) {
-	    if (fip->ports[i].state != STATE_FILTERED)
+	while (it < NB_SCAN)
+	{
+	    filtered = 0;
+	    if (nmap->opts.scans[it] == 0)
 	    {
-		printf("port %d => ", fip->ports[i].id);
-		print_state_name(fip->ports[i].state, fip->ports[i].id);
+		it++;
+		continue ;
 	    }
 	    else
-		filtered++;
-	    i++;
+		printf("printing for scan %d\n", it);
+	    while (fip->ports[i].id != 0) {
+		if (fip->ports[i].states[it] != STATE_FILTERED)
+		{
+		    printf("port %d => ", fip->ports[i].id);
+		    print_state_name(fip->ports[i].states[it], fip->ports[i].id);
+		}
+		else
+		    filtered++;
+		i++;
+	    }
+	    if (filtered > 0)
+		    printf("Not shown: %d filtered ports.\n", filtered);
+	    it++;
 	}
-	printf("Not shown: %d filtered ports.\n", filtered);
 	free_nmap(&nmap);
 	printf("end of prog\n");
 	pthread_mutex_destroy(&nmap->mutex);

@@ -17,6 +17,7 @@ t_pstate	tcp_packet_state(t_callback_data *cdata, struct tcphdr *tcph)
 
 t_pstate	icmp_packet_state(t_callback_data *cdata, struct icmphdr *icmph)
 {
+    printf("got icmp t %d c %d\n", icmph->type, icmph->code);
     if (cdata->scan != SCAN_UDP)
 	return STATE_FILTERED;
     if (icmph->type == 3 && icmph->code == 3)
@@ -31,6 +32,10 @@ void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *p
 	t_callback_data *cdata = (t_callback_data*)user;
 
 	iph = (struct iphdr*)(packet + sizeof(struct ether_header));
+	printf("PROTO %d (tcp %d udp %d icmp %d)\n", iph->protocol, IPPROTO_TCP, IPPROTO_UDP, IPPROTO_ICMP);
+	char	buf[256], buf2[256];
+	printf("src %s dst %s\n", inet_ntop(AF_INET, &iph->saddr, buf, 256),
+		inet_ntop(AF_INET, &iph->daddr, buf2, 256));
 	if (iph->protocol == IPPROTO_TCP)
 	{
 		cdata->state = tcp_packet_state(cdata,
@@ -38,6 +43,9 @@ void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *p
 	}
 	else if (iph->protocol == IPPROTO_UDP)
 	{
+	    struct udphdr *udph = (struct udphdr*)(packet + sizeof(struct ether_header) + sizeof(struct iphdr));
+	    printf("src port %d dst %d\n",
+		    ntohs(udph->source), ntohs(udph->dest));
 		if (cdata->scan == SCAN_UDP)
 		    cdata->state = STATE_OPEN;
 		else
@@ -92,7 +100,10 @@ t_pstate test_one_port(
 	}
 
 //	printf("Test port %s:%d by %ld\n", ip_addr, port, (long) pthread_self());
-	asprintf(&filter, "src %s and src port %d", ip_addr, port);
+	if (scan == SCAN_UDP)
+		asprintf(&filter, "src %s", ip_addr);//udp
+	else
+		asprintf(&filter, "src %s and src port %d", ip_addr, port);//else
 	dev = strdup("eth0");
 	/*dev = pcap_lookupdev(errbuf);
 	if (dev == NULL)
@@ -135,6 +146,7 @@ t_pstate test_one_port(
 	r = 0;
 	ft_ping(port, sock, ip_addr, scan, info);
 	r = pcap_dispatch(handle, 0, ft_callback, (u_char*)&cdata);
+	printf("port %d r = %d\n", port, r);
 	if (r == -1)
 		fprintf(stderr, "port %d dispatch ret [%d] %s\n", port, r, strerror(errno));
 	if (r == 0)
