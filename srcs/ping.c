@@ -70,7 +70,7 @@ void	    udp_ping(
     struct sockaddr_in sin;
 
     len = sizeof(struct udphdr);
-    bzero(sendbuf, IP_MAXPACKET);
+    bzero(sendbuf, len);
     sin.sin_family = AF_INET;
     sin.sin_port = htons(port);
     sin.sin_addr.s_addr = inet_addr(ip_addr);
