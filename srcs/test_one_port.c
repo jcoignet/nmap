@@ -1,31 +1,55 @@
 #include "ft_nmap.h"
 
+t_pstate	tcp_packet_state(t_callback_data *cdata, struct tcphdr *tcph)
+{
+    if (cdata->scan == SCAN_UDP)
+	return STATE_OPEN;
+    if (tcph->rst == 1)
+    {
+	if (cdata->scan == SCAN_ACK)
+	    return STATE_UNFILTERED;
+	return STATE_CLOSED;
+    }
+    if (tcph->syn == 1)//ack too or not ?
+	return STATE_OPEN;
+    return STATE_FILTERED;
+}
+
+t_pstate	icmp_packet_state(t_callback_data *cdata, struct icmphdr *icmph)
+{
+    if (cdata->scan != SCAN_UDP)
+	return STATE_FILTERED;
+    if (icmph->type == 3 && icmph->code == 3)
+	return STATE_CLOSED;
+    return STATE_FILTERED;
+
+}
+
 void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *packet)
 {
-	struct tcphdr   *tcph;
 	struct iphdr	*iph;
-	struct icmphdr	*icmph;
-
 	t_callback_data *cdata = (t_callback_data*)user;
 
-	if (cdata->scan == SCAN_UDP) {
-		cdata->state = STATE_CLOSED;
-		return ;
-	}
-	tcph = (struct tcphdr*)(packet + sizeof(struct iphdr) + sizeof(struct ether_header));
 	iph = (struct iphdr*)(packet + sizeof(struct ether_header));
-
-	//if proto == TCP
-	printf("proto %d icmp %d tcp %d\n", iph->protocol, IPPROTO_ICMP, IPPROTO_TCP);
-	if (tcph->syn == 1 && tcph->ack == 1)//check bitwise ?
-		cdata->state = STATE_OPEN;
-	else if (tcph->ack == 1 && tcph->rst == 1)
-		cdata->state = STATE_CLOSED;
-	if (iph->protocol == IPPROTO_ICMP)
+	if (iph->protocol == IPPROTO_TCP)
 	{
-	    icmph = (struct icmphdr*)(packet + sizeof(struct iphdr) + sizeof(struct ether_header));
-	    printf("ICMP Type %d Code %d\n", icmph->type, icmph->code);
+		cdata->state = tcp_packet_state(cdata,
+			(struct tcphdr*)(packet + sizeof(struct ether_header) + sizeof(struct iphdr)));
 	}
+	else if (iph->protocol == IPPROTO_UDP)
+	{
+		if (cdata->scan == SCAN_UDP)
+		    cdata->state = STATE_OPEN;
+		else
+		    cdata->state = STATE_FILTERED;
+	}
+	else if (iph->protocol == IPPROTO_ICMP)
+	{
+		cdata->state = icmp_packet_state(cdata,
+			(struct icmphdr*)(packet + sizeof(struct ether_header) + sizeof(struct iphdr)));
+	}
+	else
+		cdata->state = STATE_FILTERED;
 	(void)pkthdr;
 }
 
@@ -62,7 +86,10 @@ t_pstate test_one_port(
 
 	sock = create_socket(scan);//ret
 	if (sock < 0)
-	fprintf(stderr, "sock failed [%s]\n", strerror(errno));
+	{
+	    fprintf(stderr, "sock failed [%s]\n", strerror(errno));
+	    return STATE_FILTERED;
+	}
 
 //	printf("Test port %s:%d by %ld\n", ip_addr, port, (long) pthread_self());
 	asprintf(&filter, "src %s and src port %d", ip_addr, port);
@@ -78,26 +105,26 @@ t_pstate test_one_port(
 	if (pcap_lookupnet(dev, &netp, &maskp, errbuf) == -1)
 	{
 		fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev, errbuf);
-//		exit(EXIT_FAILURE);
+		return STATE_FILTERED;
 	}
 
 	handle = pcap_open_live(dev, BUFSIZ, 1, PCAP_TIMEOUT, errbuf);
 	if (handle == NULL)
 	{
 		fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
-//		exit(EXIT_FAILURE);
+		return STATE_FILTERED;
 	}
 
 	if (pcap_compile(handle, &fp, filter, 0, netp) == -1)
 	{
 		fprintf(stderr, "Couldn't parse filter %s: %s\n", filter, pcap_geterr(handle));
- //   	exit(EXIT_FAILURE);
+		return STATE_FILTERED;
 	}
 
 	if (pcap_setfilter(handle, &fp) == -1)
 	{
 		fprintf(stderr, "Couldn't install filter %s: %s\n", filter, pcap_geterr(handle));
-//    	exit(EXIT_FAILURE);
+		return STATE_FILTERED;
 	}
 	pthread_mutex_unlock(&pcap_compile_mutex);
 
@@ -107,18 +134,15 @@ t_pstate test_one_port(
 
 	r = 0;
 	ft_ping(port, sock, ip_addr, scan, info);
-//	sleep(3);
 	r = pcap_dispatch(handle, 0, ft_callback, (u_char*)&cdata);
 	if (r == -1)
 		fprintf(stderr, "port %d dispatch ret [%d] %s\n", port, r, strerror(errno));
 	if (r == 0)
 	{
-		if (scan == SCAN_UDP)
-			cdata.state = STATE_OPENFILTERED;
-		else
+		if (scan == SCAN_SYN || scan == SCAN_ACK)
 			cdata.state = STATE_FILTERED;
-		// ans->status = STATE_FILTERING;
-		//fprintf(stderr, "port %d filtered\n", port->id);
+		else
+			cdata.state = STATE_OPENFILTERED;
 	}
 	pcap_close(handle);
 	free(filter);
