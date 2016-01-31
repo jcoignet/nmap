@@ -34,7 +34,8 @@ static void	print_scan_and_state(t_scan scan, t_pstate state, int isccl)
 	"FIN",
 	"XMAS",
 	"ACK",
-	"UDP"
+	"UDP",
+	"WIN"
     };
     if (isccl == 0)
         printf("%s(%s) ", scan_names[scan], state_names[state]);

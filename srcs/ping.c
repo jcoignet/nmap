@@ -129,7 +129,7 @@ void ft_ping(
 	    tcph->psh = 1;
 	    tcph->urg = 1;
 	}
-	else if (scan == SCAN_ACK)
+	else if (scan == SCAN_ACK || scan == SCAN_WIN)
 	    tcph->ack = 1;
 	
 	struct pseudo_header psh;

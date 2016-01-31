@@ -8,6 +8,13 @@ t_pstate	tcp_packet_state(t_callback_data *cdata, struct tcphdr *tcph)
     {
 	if (cdata->scan == SCAN_ACK)
 	    return STATE_UNFILTERED;
+	else if (cdata->scan == SCAN_WIN)
+	{
+	    if (tcph->window == 0)
+		return STATE_CLOSED;
+	    else
+		return STATE_OPEN;
+	}
 	return STATE_CLOSED;
     }
     if (tcph->syn == 1)//ack too or not ?
@@ -139,7 +146,7 @@ t_pstate test_one_port(
 		fprintf(stderr, "port %d dispatch ret [%d] %s\n", port, r, strerror(errno));
 	if (r == 0)
 	{
-		if (scan == SCAN_SYN || scan == SCAN_ACK)
+		if (scan == SCAN_SYN || scan == SCAN_ACK || scan == SCAN_WIN)
 			cdata.state = STATE_FILTERED;
 		else
 			cdata.state = STATE_OPENFILTERED;

@@ -152,6 +152,8 @@ static int update_scan(t_options *opt, char **av)
 			opt->scans[SCAN_ACK] = 1;
 		if (ft_strequ(av[to_return], "UDP"))
 			opt->scans[SCAN_UDP] = 1;
+		if (ft_strequ(av[to_return], "WIN"))
+			opt->scans[SCAN_WIN] = 1;
 		++to_return;
 	}
 	return (to_return);
@@ -202,6 +204,7 @@ t_options parse_opt(int ac, char **av)
 	to_return.scans[SCAN_XMAS] = 1;
 	to_return.scans[SCAN_ACK] = 1;
 	to_return.scans[SCAN_UDP] = 1;
+	to_return.scans[SCAN_WIN] = 0;
 	to_return.timeout = PCAP_TIMEOUT;
 
 	i = 1;

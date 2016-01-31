@@ -47,7 +47,7 @@
 # define VERSION_NBR "1.0"
 # define PING_DATALEN 56
 # define ICMP_HEADER_LEN 8
-# define NB_SCAN 6
+# define NB_SCAN 7
 # define SRC_PORT 80
 # define PCAP_TIMEOUT 3000
 
@@ -60,7 +60,8 @@ typedef enum	e_scan
 	SCAN_FIN,
 	SCAN_XMAS,
 	SCAN_ACK,
-	SCAN_UDP
+	SCAN_UDP,
+	SCAN_WIN
 }				t_scan;
 
 typedef enum	e_pstate
