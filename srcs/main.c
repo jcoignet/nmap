@@ -172,6 +172,12 @@ int main (int argc, char *argv[])
 	void *status;
 	t_nmap	*nmap;
 
+	// Check rights
+	if (getuid() != 0)
+	{
+	    printf("Error: you must be root to execute %s\n", argv[0]);
+	    return EXIT_FAILURE;
+	}
 	// Initialize nmap
 	nmap = malloc(sizeof(t_nmap));
 	nmap->sport = 80;
