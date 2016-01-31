@@ -17,7 +17,6 @@ t_pstate	tcp_packet_state(t_callback_data *cdata, struct tcphdr *tcph)
 
 t_pstate	icmp_packet_state(t_callback_data *cdata, struct icmphdr *icmph)
 {
-    printf("got icmp t %d c %d\n", icmph->type, icmph->code);
     if (cdata->scan != SCAN_UDP)
 	return STATE_FILTERED;
     if (icmph->type == 3 && icmph->code == 3)
@@ -32,10 +31,6 @@ void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *p
 	t_callback_data *cdata = (t_callback_data*)user;
 
 	iph = (struct iphdr*)(packet + sizeof(struct ether_header));
-	printf("PROTO %d (tcp %d udp %d icmp %d)\n", iph->protocol, IPPROTO_TCP, IPPROTO_UDP, IPPROTO_ICMP);
-	char	buf[256], buf2[256];
-	printf("src %s dst %s\n", inet_ntop(AF_INET, &iph->saddr, buf, 256),
-		inet_ntop(AF_INET, &iph->daddr, buf2, 256));
 	if (iph->protocol == IPPROTO_TCP)
 	{
 		cdata->state = tcp_packet_state(cdata,
@@ -43,9 +38,6 @@ void	ft_callback(u_char *user, const struct pcap_pkthdr* pkthdr, const u_char *p
 	}
 	else if (iph->protocol == IPPROTO_UDP)
 	{
-	    struct udphdr *udph = (struct udphdr*)(packet + sizeof(struct ether_header) + sizeof(struct iphdr));
-	    printf("src port %d dst %d\n",
-		    ntohs(udph->source), ntohs(udph->dest));
 		if (cdata->scan == SCAN_UDP)
 		    cdata->state = STATE_OPEN;
 		else
@@ -83,7 +75,8 @@ t_pstate test_one_port(
 	int port,
 	char *ip_addr,
 	struct addrinfo info,
-	t_scan scan
+	t_scan scan,
+	int timeout
 ) {
 	char	*dev, errbuf[PCAP_ERRBUF_SIZE];
 	bpf_u_int32	netp, maskp;
@@ -101,25 +94,24 @@ t_pstate test_one_port(
 
 //	printf("Test port %s:%d by %ld\n", ip_addr, port, (long) pthread_self());
 	if (scan == SCAN_UDP)
-		asprintf(&filter, "src %s", ip_addr);//udp
+		asprintf(&filter, "(icmp and src %s) or (udp and src %s and src port %d)", ip_addr, ip_addr, port);//udp
 	else
 		asprintf(&filter, "src %s and src port %d", ip_addr, port);//else
-	dev = strdup("eth0");
-	/*dev = pcap_lookupdev(errbuf);
+	pthread_mutex_lock(&pcap_compile_mutex);
+	dev = pcap_lookupdev(errbuf);
 	if (dev == NULL)
 	{
 		fprintf(stderr, "Couldn't find default device: %s\n", errbuf);
-//		exit(EXIT_FAILURE);
-	}*/
+		return STATE_FILTERED;
+	}
 
-	pthread_mutex_lock(&pcap_compile_mutex);
 	if (pcap_lookupnet(dev, &netp, &maskp, errbuf) == -1)
 	{
 		fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev, errbuf);
 		return STATE_FILTERED;
 	}
 
-	handle = pcap_open_live(dev, BUFSIZ, 1, PCAP_TIMEOUT, errbuf);
+	handle = pcap_open_live(dev, BUFSIZ, 1, timeout, errbuf);
 	if (handle == NULL)
 	{
 		fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);

@@ -153,8 +153,6 @@ void ft_ping(
 	}
 	else if (scan == SCAN_ACK)
 	    tcph->ack = 1;
-	//for NULL scan leave all bits to 0
-	//mb change srcport to  avoid conflits ?
 	
 	struct pseudo_header psh;
 	psh.source_address = inet_addr("192.168.0.8");

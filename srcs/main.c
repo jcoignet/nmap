@@ -125,7 +125,7 @@ void *thread_fn(void *v_nmap)
 	    {
 		res[i] = STATE_UNTESTED;
 		if (scans[i] == 1)
-		    res[i] = test_one_port(port->id, ip_addr, *port->parent->info, i);
+		    res[i] = test_one_port(port->id, ip_addr, *port->parent->info, i, nmap->opts.timeout);
 		i++;
 	    }
 	    //todo set_port_as_tested with res[nb_scan]
@@ -221,7 +221,7 @@ int main (int argc, char *argv[])
 	// all threads has been ended
 	output_scan(&nmap->opts);
 	free_nmap(&nmap);
-	printf("end of prog\n");
 	pthread_mutex_destroy(&nmap->mutex);
+	pthread_mutex_destroy(&pcap_compile_mutex);
 	pthread_exit(NULL);
 }

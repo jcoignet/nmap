@@ -108,6 +108,7 @@ typedef struct	s_options
 	char		*ports;
 	t_list		*ips;
 	int			nb_thread;
+	int		timeout;
 
 	/*
 	** if (opt->scans[SCAN_UDP] == 1), then scan udp is required.
@@ -131,7 +132,7 @@ void			parse_ports(t_nmap *nmap);
 void			quit(t_nmap *nmap, int quit_status);
 void			free_options(t_options *opt);
 t_pstate 		test_one_port(int port, char *ip_addr,
-								struct addrinfo addrinfo, t_scan scan);
+					struct addrinfo addrinfo, t_scan scan, int timeout);
 void			set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate *new_states);
 
 /*

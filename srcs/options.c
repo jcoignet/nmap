@@ -202,6 +202,7 @@ t_options parse_opt(int ac, char **av)
 	to_return.scans[SCAN_XMAS] = 1;
 	to_return.scans[SCAN_ACK] = 1;
 	to_return.scans[SCAN_UDP] = 1;
+	to_return.timeout = PCAP_TIMEOUT;
 
 	i = 1;
 	while (av[i] != NULL)
