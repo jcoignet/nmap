@@ -111,7 +111,7 @@ void *thread_fn(void *v_nmap)
 	    {
 		res[i] = STATE_UNTESTED;
 		if (scans[i] == 1)
-		    res[i] = test_one_port(port->id, ip_addr, *port->parent->info, i, nmap->opts.timeout);
+		    res[i] = test_one_port(port->id, ip_addr, *port->parent->info, i, nmap->opts.timeout, nmap->saddr, nmap->dev);
 		i++;
 	    }
 	    //todo set_port_as_tested with res[nb_scan]
@@ -148,6 +148,43 @@ static void add_addr_info(t_nmap *nmap)
 	}
 }
 
+char	*get_dev(void)
+{
+    char errbuf[PCAP_ERRBUF_SIZE];
+    char *dev;
+
+    dev = pcap_lookupdev(errbuf);
+    if (dev == NULL)
+    {
+	printf("Couldn't find default device: %s\n", errbuf);
+	return (NULL);
+    }
+    return (strdup(dev));
+
+}
+char	*get_source_addr(char *dev)
+{
+    struct ifaddrs *ifap, *ifa;
+    char	    *s;
+    struct sockaddr_in *sin;
+
+    getifaddrs(&ifap);
+    ifa = ifap;
+    while (ifa)
+    {
+	if (ifa->ifa_addr->sa_family == AF_INET && strcmp(ifa->ifa_name, dev) == 0)
+	{
+	    sin = (struct sockaddr_in *) ifa->ifa_addr;
+	    s = inet_ntoa(sin->sin_addr);
+	    freeifaddrs(ifap);
+	    return (strdup(s));
+	}
+	 ifa = ifa->ifa_next;
+    }
+    freeifaddrs(ifap);
+    return (NULL);
+}
+
 pthread_mutex_t pcap_compile_mutex;
 int main (int argc, char *argv[])
 {
@@ -166,6 +203,12 @@ int main (int argc, char *argv[])
 	}
 	// Initialize nmap
 	nmap = malloc(sizeof(t_nmap));
+	if ((nmap->dev = get_dev()) == NULL)
+	    return EXIT_FAILURE;
+
+	if ((nmap->saddr = get_source_addr(nmap->dev)) == NULL)
+	    return EXIT_FAILURE;
+	
 	nmap->sport = 80;
 	nmap->opts = parse_opt(argc, argv);
 	parse_ports(nmap);

@@ -24,30 +24,6 @@ u_short		ft_checksum(u_short *data, int len)
 	return (checksum);
 }
 
-// void		ft_catch(t_nmap *nmap)
-// {
-// 	char			recvbuf[IP_MAXPACKET];
-// 	int				recv_len;
-
-// 	if ((recv_len = recvfrom(nmap->sock, (void*)recvbuf, sizeof(recvbuf), 0, NULL, 0)) < 0)
-// 	{
-// 		if (errno != EAGAIN)
-// 			dprintf(2, "Error: recvmsg failed.\n");
-// 		return ;
-// 	}
-// 	printf("reclen %d\n", recv_len);
-// 	struct tcphdr *tcph = (struct tcphdr*)(recvbuf + sizeof(struct iphdr));
-//     uint16_t	src_port, dst_port;
-//     uint16_t	src_p, dst_p;
-
-//     src_port = ntohs(tcph->source);//ntohs(tcph->source);
-//     dst_port = ntohs(tcph->dest);
-//     src_p = tcph->source;
-//     dst_p = tcph->dest;
-//     printf("CATCH src %d or %d dst %d or %d SYN %d ACK %d RST %d\n",
-// 	    src_port, src_p, dst_port, dst_p, tcph->syn, tcph->ack, tcph->rst);
-// }
-
 struct pseudo_header
 {
         u_int32_t source_address;
@@ -61,7 +37,8 @@ void	    udp_ping(
 	int port,
 	int sock,
 	char *ip_addr,
-	struct addrinfo info
+	struct addrinfo info,
+	char *saddr
 ) {
     char	sendbuf[sizeof(struct udphdr)];
     int	len;
@@ -81,7 +58,7 @@ void	    udp_ping(
     udph->check = 0; //leave checksum 0 now, filled later by pseudo header
 
     struct pseudo_header psh;
-    psh.source_address = inet_addr("192.168.0.8");
+    psh.source_address = inet_addr(saddr);
     psh.dest_address = sin.sin_addr.s_addr;
     psh.placeholder = 0;
     psh.protocol = IPPROTO_UDP;
@@ -103,11 +80,12 @@ void ft_ping(
 	int sock,
 	char *ip_addr,
 	t_scan scan,
-	struct addrinfo info
+	struct addrinfo info,
+	char *saddr
 ) {
 	if (scan == SCAN_UDP)
 	{
-	    udp_ping(port, sock, ip_addr, info);
+	    udp_ping(port, sock, ip_addr, info, saddr);
 	    return ;
 	}
 
@@ -155,7 +133,7 @@ void ft_ping(
 	    tcph->ack = 1;
 	
 	struct pseudo_header psh;
-	psh.source_address = inet_addr("192.168.0.8");
+	psh.source_address = inet_addr(saddr);
 	psh.dest_address = sin.sin_addr.s_addr;
 	psh.placeholder = 0;
 	psh.protocol = IPPROTO_TCP;

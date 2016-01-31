@@ -76,9 +76,11 @@ t_pstate test_one_port(
 	char *ip_addr,
 	struct addrinfo info,
 	t_scan scan,
-	int timeout
+	int timeout,
+	char *saddr,
+	char *dev
 ) {
-	char	*dev, errbuf[PCAP_ERRBUF_SIZE];
+	char	errbuf[PCAP_ERRBUF_SIZE];
 	bpf_u_int32	netp, maskp;
 	pcap_t	*handle;
 	struct bpf_program fp;	/* The compiled filter expression */
@@ -97,14 +99,8 @@ t_pstate test_one_port(
 		asprintf(&filter, "(icmp and src %s) or (src %s and src port %d)", ip_addr, ip_addr, port);//udp
 	else
 		asprintf(&filter, "(icmp and src %s) or (tcp and src %s and src port %d)", ip_addr, ip_addr, port);//else
-	pthread_mutex_lock(&pcap_compile_mutex);
-	dev = pcap_lookupdev(errbuf);
-	if (dev == NULL)
-	{
-		fprintf(stderr, "Couldn't find default device: %s\n", errbuf);
-		return STATE_FILTERED;
-	}
 
+	pthread_mutex_lock(&pcap_compile_mutex);
 	if (pcap_lookupnet(dev, &netp, &maskp, errbuf) == -1)
 	{
 		fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev, errbuf);
@@ -136,7 +132,7 @@ t_pstate test_one_port(
 	cdata.scan = scan;
 
 	r = 0;
-	ft_ping(port, sock, ip_addr, scan, info);
+	ft_ping(port, sock, ip_addr, scan, info, saddr);
 	r = pcap_dispatch(handle, 0, ft_callback, (u_char*)&cdata);
 //	printf("port %d r = %d\n", port, r);
 	if (r == -1)

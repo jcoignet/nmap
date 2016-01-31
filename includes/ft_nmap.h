@@ -32,6 +32,7 @@
 # include <errno.h>
 # include <stdint.h>
 # include <pthread.h>
+# include <ifaddrs.h>
 # include <math.h>
 
 #ifdef __APPLE__
@@ -118,6 +119,8 @@ typedef struct	s_options
 
 typedef struct	s_nmap
 {
+    char		*saddr;
+    char		*dev;
     char	    	*progname;
     t_options		opts;
     pthread_mutex_t	mutex;
@@ -127,12 +130,12 @@ typedef struct	s_nmap
 t_options		parse_opt(int ac, char **av);
 void			print_options(t_options *opt);
 void			ft_ping(int port, int sock, char *ip_addr, t_scan scan,
-						struct addrinfo info);
+						struct addrinfo info, char *saddr);
 void			parse_ports(t_nmap *nmap);
 void			quit(t_nmap *nmap, int quit_status);
 void			free_options(t_options *opt);
 t_pstate 		test_one_port(int port, char *ip_addr,
-					struct addrinfo addrinfo, t_scan scan, int timeout);
+					struct addrinfo addrinfo, t_scan scan, int timeout, char *saddr, char *dev);
 void			set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate *new_states);
 
 /*
