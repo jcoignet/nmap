@@ -144,6 +144,7 @@ void			set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate *new_states);
 ** 			otherwise.
 */
 t_port			 *get_next_untested_port(t_nmap *nmap,
-											int *port, char **ip_addr);
+						int *port, char **ip_addr);
+void	output_scan(t_options *opts);
 
 #endif

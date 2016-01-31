@@ -162,30 +162,6 @@ static void add_addr_info(t_nmap *nmap)
 	}
 }
 
-
-void	print_state_name(t_pstate state, int port)
-{
-    const char    *names[] = {
-	"UNTESTED",
-	"BEING_TESTED",
-	"OPEN",
-	"CLOSED",
-	"FILTERED",
-	"UNFILTERED",
-	"OPEN|FILTERED"
-    };
-
-    printf("%s", names[state]);
-    struct servent  *service = getservbyport(htons(port), NULL);//shouldnt be null but tcp or udp
-    if (service != NULL)
-    {
-	printf(" %s/%s\n",
-		service->s_name, service->s_proto);
-    }
-    else
-	printf(" unknown\n");
-}
-
 pthread_mutex_t pcap_compile_mutex;
 int main (int argc, char *argv[])
 {
@@ -237,34 +213,7 @@ int main (int argc, char *argv[])
 	}
 
 	// all threads has been ended
-	t_ip *fip = nmap->opts.ips->content;
-	int i = 0;
-	int it = 0;
-	int filtered = 0;
-	while (it < NB_SCAN)
-	{
-	    filtered = 0;
-	    if (nmap->opts.scans[it] == 0)
-	    {
-		it++;
-		continue ;
-	    }
-	    else
-		printf("printing for scan %d\n", it);
-	    while (fip->ports[i].id != 0) {
-		if (fip->ports[i].states[it] != STATE_FILTERED)
-		{
-		    printf("port %d => ", fip->ports[i].id);
-		    print_state_name(fip->ports[i].states[it], fip->ports[i].id);
-		}
-		else
-		    filtered++;
-		i++;
-	    }
-	    if (filtered > 0)
-		    printf("Not shown: %d filtered ports.\n", filtered);
-	    it++;
-	}
+	output_scan(&nmap->opts);
 	free_nmap(&nmap);
 	printf("end of prog\n");
 	pthread_mutex_destroy(&nmap->mutex);

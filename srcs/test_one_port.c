@@ -146,7 +146,7 @@ t_pstate test_one_port(
 	r = 0;
 	ft_ping(port, sock, ip_addr, scan, info);
 	r = pcap_dispatch(handle, 0, ft_callback, (u_char*)&cdata);
-	printf("port %d r = %d\n", port, r);
+//	printf("port %d r = %d\n", port, r);
 	if (r == -1)
 		fprintf(stderr, "port %d dispatch ret [%d] %s\n", port, r, strerror(errno));
 	if (r == 0)
