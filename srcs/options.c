@@ -38,6 +38,8 @@ void print_options(t_options *opt)
 		printf("ACK ");
 	if (opt->scans[SCAN_UDP] == 1)
 		printf("UDP ");
+	if (opt->scans[SCAN_WIN] == 1)
+		printf("WIN ");
 	printf("\n");
 }
 

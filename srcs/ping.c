@@ -52,7 +52,7 @@ void	    udp_ping(
     sin.sin_port = htons(port);
     sin.sin_addr.s_addr = inet_addr(ip_addr);
     udph = (struct udphdr*)sendbuf;
-    udph->source = htons(SRC_PORT);
+    udph->source = htons(SRC_PORT + (int)SCAN_UDP);
     udph->dest = htons (port);
     udph->len = htons(8);
     udph->check = 0; //leave checksum 0 now, filled later by pseudo header
@@ -102,7 +102,7 @@ void ft_ping(
 	sin.sin_addr.s_addr = inet_addr(ip_addr);
 	tcph = (struct tcphdr*)sendbuf;
 
-	tcph->source = htons(SRC_PORT);//src port
+	tcph->source = htons(SRC_PORT + (int)scan);//src port
 	tcph->dest = htons(port);
 	tcph->seq = 0;
 	tcph->ack_seq = 0;
