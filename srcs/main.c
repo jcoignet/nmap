@@ -21,21 +21,6 @@ void free_nmap(t_nmap **nmap)
 	nmap = NULL;
 }
 
-// void display_ip_header()
-// {
-//	struct hostent		*client;
-//	 char			*fqdn;
-// 	((struct sockaddr_in*)(nmap->info->ai_addr))->sin_port = nmap->tport;
-// 	client = gethostbyaddr((void*)&(((struct sockaddr_in*)(info->ai_addr))->sin_addr.s_addr),
-// 		sizeof(((struct sockaddr_in*)(info->ai_addr))->sin_addr.s_addr), AF_INET);
-// 	if (client == NULL || client->h_name == NULL)
-// 	    fqdn = strdup(nmap->hostname);
-// 	else
-// 	    fqdn = strdup(client->h_name);
-// 	printf("ft_nmap scan report for %s (%s)\n", nmap->hostname, buf);
-// 	//host is up + ping
-// 	printf("rDNS record for %s: %s\n\n", buf, fqdn);
-// }
 
 void quit(t_nmap *nmap, int quit_status)
 {
@@ -117,6 +102,7 @@ void *thread_fn(void *v_nmap)
 	pthread_mutex_lock(&nmap->mutex);
 	memcpy(scans, nmap->opts.scans, NB_SCAN * sizeof(t_scan));
 	pthread_mutex_unlock(&nmap->mutex);
+
 
 	port = get_next_untested_port(nmap, &port_to_test, &ip_addr);
 	while (port != NULL) {

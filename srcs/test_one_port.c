@@ -94,9 +94,9 @@ t_pstate test_one_port(
 
 //	printf("Test port %s:%d by %ld\n", ip_addr, port, (long) pthread_self());
 	if (scan == SCAN_UDP)
-		asprintf(&filter, "(icmp and src %s) or (udp and src %s and src port %d)", ip_addr, ip_addr, port);//udp
+		asprintf(&filter, "(icmp and src %s) or (src %s and src port %d)", ip_addr, ip_addr, port);//udp
 	else
-		asprintf(&filter, "src %s and src port %d", ip_addr, port);//else
+		asprintf(&filter, "(icmp and src %s) or (tcp and src %s and src port %d)", ip_addr, ip_addr, port);//else
 	pthread_mutex_lock(&pcap_compile_mutex);
 	dev = pcap_lookupdev(errbuf);
 	if (dev == NULL)

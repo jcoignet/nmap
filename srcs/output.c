@@ -1,5 +1,22 @@
 #include "ft_nmap.h"
 
+static void display_ip_info(t_ip *ip)
+{
+	struct hostent		*client;
+	 char			*fqdn;
+
+	client = gethostbyaddr((void*)&(((struct sockaddr_in*)(ip->info->ai_addr))->sin_addr.s_addr),
+		sizeof(((struct sockaddr_in*)(ip->info->ai_addr))->sin_addr.s_addr), AF_INET);
+	if (client == NULL || client->h_name == NULL)
+	    fqdn = strdup(ip->hostname);
+	else
+	    fqdn = strdup(client->h_name);
+	printf("\nft_nmap scan report for %s (%s)\n", ip->hostname, ip->hostip);
+	//host is up + ping
+	printf("rDNS record for %s: %s\n", ip->hostip, fqdn);
+	free(fqdn);
+}
+
 static void	print_scan_and_state(t_scan scan, t_pstate state, int isccl)
 {
     const char    *state_names[] = {
@@ -64,6 +81,7 @@ void	output_scan(t_options *opts)
     while (ips != NULL)
     {
 	i = 0;
+	display_ip_info((t_ip*)ips->content);
 	ports = ((t_ip*)(ips->content))->ports;
 	while (ports[i].id != 0)
 	{
