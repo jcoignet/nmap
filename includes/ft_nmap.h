@@ -127,6 +127,7 @@ typedef struct	s_nmap
     t_options		opts;
     pthread_mutex_t	mutex;
     int		    	sport;
+    int		    	timeout;
 }				t_nmap;
 
 t_options		parse_opt(int ac, char **av);

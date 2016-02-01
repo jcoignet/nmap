@@ -22,8 +22,8 @@ void print_options(t_options *opt)
 		iter = iter->next;
 	}
 	printf("\nports: %s\n", opt->ports);
-
 	printf("nb_thread: %d\n", opt->nb_thread);
+	printf("timeout: %d\n", opt->timeout);
 
 	printf("Scans: ");
 	if (opt->scans[SCAN_SYN] == 1)
@@ -68,6 +68,16 @@ static int update_ports(t_options *opt, char *av)
 	if (av == NULL || av[0] == '-')
 		return (-1);
 	opt->ports = strdup(av);
+	return (2);
+}
+
+static int update_timeout(t_options *opt, char *av)
+{
+	if (av == NULL || av[0] == '-')
+		return (-1);
+	opt->timeout = atoi(av);
+	if (opt->timeout <= 0)
+		opt->timeout = PCAP_TIMEOUT;
 	return (2);
 }
 
@@ -176,6 +186,8 @@ static int test_arg(t_options *opt, char **av)
 		i = update_ip_file(opt, av[1]);
 	else if (ft_strequ(av[0], "--speedup"))
 		i = update_nb_thread(opt, av[1]);
+	else if (ft_strequ(av[0], "--timeout"))
+		i = update_timeout(opt, av[1]);
 	else if (ft_strequ(av[0], "--scan"))
 		i = update_scan(opt, av);
 	else
@@ -191,6 +203,8 @@ void test_opt(t_options *opt)
 		opt->nb_thread = 1;
 	if (opt->ports == NULL)
 		opt->ports = strdup("1-1024");
+	if (opt->timeout <= 0)
+		opt->timeout = PCAP_TIMEOUT;
 }
 
 t_options parse_opt(int ac, char **av)
