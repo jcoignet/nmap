@@ -58,7 +58,7 @@ all: $(NAME)
 
 $(NAME): $(OBJECTS)
 	@ar rc $@ $(OBJECTS)
-	@ranlib $(NAME)
+	ranlib $(NAME)
 	@echo Creating Library $(NAME) $(words $(OBJECTS)) files inside
 
 $(PATH_OBJ)/%.o: $(addprefix $(PATH_SRC)/,%.c)

@@ -21,11 +21,12 @@ void port_format_error(t_nmap *nmap)
 		quit(nmap, EXIT_FAILURE);
 }
 
-static void set_port_id(t_port *port, int id, int index)
+static int set_port_id(t_port *port, int id, int index)
 {
-	if (id <= 0)
-		return ;
+	if (id <= 0 || id > MAX_PORT)
+		return 0;
 	port[index].id = id;
+	return (1);
 }
 
 static t_port *ports_set(t_nmap *nmap, char *ports_str, int *ttl_port)
@@ -41,9 +42,10 @@ static t_port *ports_set(t_nmap *nmap, char *ports_str, int *ttl_port)
 
 	// init ports
 	bzero(ports_array, (end - begin + 2) * sizeof(t_port));
-	int i;
+	int i, index;
+	index = 0;
 	for (i = 0 ; i <= (end - begin) ; ++i) {
-		set_port_id(ports_array, begin + i, i);
+		index += set_port_id(ports_array, begin + i, index);
 	}
 
 	*ttl_port = i;

@@ -50,6 +50,7 @@
 # define NB_SCAN 7
 # define SRC_PORT 80
 # define PCAP_TIMEOUT 3000
+# define MAX_PORT 65535
 
 pthread_mutex_t pcap_compile_mutex;
 
