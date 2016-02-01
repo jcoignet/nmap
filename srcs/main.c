@@ -110,7 +110,7 @@ void *thread_fn(void *v_nmap)
 	    while (i < NB_SCAN)
 	    {
 		res[i] = STATE_UNTESTED;
-		if (scans[i] == 1)
+		if (scans[i] == 1 && i != SCAN_UDP)
 		    res[i] = test_one_port(port->id, ip_addr, *port->parent->info, i, nmap->opts.timeout, nmap->saddr, nmap->dev);
 		i++;
 	    }
@@ -185,6 +185,31 @@ char	*get_source_addr(char *dev)
     return (NULL);
 }
 
+void	udp_scan(t_nmap *nmap)
+{
+    t_ip  *ip;
+    t_port  *ports;
+    t_list  *iter;
+    t_pstate state;
+    int	i;
+
+    iter = nmap->opts.ips;
+    while (iter != NULL)
+    {
+	ip = iter->content;
+	ports = ip->ports;
+	i = 0;
+	while (ports[i].id != 0)
+	{
+
+	    state = test_one_port(ports[i].id, ip->hostip, *ports[i].parent->info, SCAN_UDP, nmap->opts.timeout, nmap->saddr, nmap->dev);
+	    ports[i].states[SCAN_UDP] = state;
+	    i++;
+	}
+	iter = iter->next;
+    }
+}
+
 pthread_mutex_t pcap_compile_mutex;
 int main (int argc, char *argv[])
 {
@@ -247,7 +272,15 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	// all threads has been ended
+	// All threads have been ended we do udp scan if needed
+	printf("Tcp scans done.\n");
+	if (nmap->opts.scans[SCAN_UDP] == 1)
+	{
+	    udp_scan(nmap);
+	    printf("Udp scans done.\n");
+	}
+
+	// Output and exit
 	output_scan(&nmap->opts);
 	free_nmap(&nmap);
 	pthread_mutex_destroy(&nmap->mutex);

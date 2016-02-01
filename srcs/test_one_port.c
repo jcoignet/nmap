@@ -140,7 +140,14 @@ t_pstate test_one_port(
 
 	r = 0;
 	ft_ping(port, sock, ip_addr, scan, info, saddr);
-	r = pcap_dispatch(handle, 0, ft_callback, (u_char*)&cdata);
+	int to = timeout / 1000;
+	if (to <= 0)
+	    to = 1;
+	while (to > 0 && r == 0)
+	{
+		r = pcap_dispatch(handle, 0, ft_callback, (u_char*)&cdata);
+		to--;
+	}
 //	printf("port %d r = %d\n", port, r);
 	if (r == -1)
 		fprintf(stderr, "port %d dispatch ret [%d] %s\n", port, r, strerror(errno));
