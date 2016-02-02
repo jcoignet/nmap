@@ -51,6 +51,7 @@
 # define SRC_PORT 80
 # define PCAP_TIMEOUT 3000
 # define MAX_PORT 65535
+# define DEFAULT_RETRIES 1
 
 pthread_mutex_t pcap_compile_mutex;
 
@@ -114,6 +115,7 @@ typedef struct	s_options
 	t_list		*ips;
 	int			nb_thread;
 	int		timeout;
+	int		retries;
 
 	/*
 	** if (opt->scans[SCAN_UDP] == 1), then scan udp is required.
@@ -139,7 +141,8 @@ void			parse_ports(t_nmap *nmap);
 void			quit(t_nmap *nmap, int quit_status);
 void			free_options(t_options *opt);
 t_pstate 		test_one_port(int port, char *ip_addr,
-					struct addrinfo addrinfo, t_scan scan, int timeout, char *saddr, char *dev, int islocal);
+					struct addrinfo addrinfo, t_scan scan, int timeout, char *saddr,
+					char *dev, int islocal, int retries);
 void			set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate *new_states);
 
 /*

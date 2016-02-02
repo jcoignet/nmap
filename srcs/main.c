@@ -111,7 +111,7 @@ void *thread_fn(void *v_nmap)
 	    {
 		res[i] = STATE_UNTESTED;
 		if (scans[i] == 1 && i != SCAN_UDP)
-		    res[i] = test_one_port(port->id, ip_addr, *port->parent->info, i, nmap->opts.timeout, nmap->saddr, nmap->dev, port->parent->islocal);
+		    res[i] = test_one_port(port->id, ip_addr, *port->parent->info, i, nmap->opts.timeout, nmap->saddr, nmap->dev, port->parent->islocal, nmap->opts.retries);
 		i++;
 	    }
 	    //todo set_port_as_tested with res[nb_scan]
@@ -209,7 +209,7 @@ void	udp_scan(t_nmap *nmap)
 	    i = 0;
 	    while (ports[i].id != 0)
 	    {
-		state = test_one_port(ports[i].id, ip->hostip, *ports[i].parent->info, SCAN_UDP, nmap->opts.timeout, nmap->saddr, nmap->dev, ip->islocal);
+		state = test_one_port(ports[i].id, ip->hostip, *ports[i].parent->info, SCAN_UDP, nmap->opts.timeout, nmap->saddr, nmap->dev, ip->islocal, nmap->opts.retries);
 		ports[i].states[SCAN_UDP] = state;
 		i++;
 	    }

@@ -86,7 +86,8 @@ t_pstate test_one_port(
 	int timeout,
 	char *saddr,
 	char *dev,
-	int islocal
+	int islocal,
+	int retries
 ) {
 	char	errbuf[PCAP_ERRBUF_SIZE];
 	bpf_u_int32	netp, maskp;
@@ -142,15 +143,13 @@ t_pstate test_one_port(
 	cdata.scan = scan;
 
 	r = 0;
-	ft_ping(port, sock, ip_addr, scan, info, saddr, islocal);
-	int to = timeout / 1000;
-	if (to <= 0)
-	    to = 1;
-	to = 1;
-	while (to > 0 && r == 0)
+	if (retries < 0)
+	    retries = DEFAULT_RETRIES;
+	while (retries >= 0 && r == 0)
 	{
+		ft_ping(port, sock, ip_addr, scan, info, saddr, islocal);
 		r = pcap_dispatch(handle, 1, ft_callback, (u_char*)&cdata);
-		to--;
+		retries--;
 	}
 //	printf("port %d r = %d\n", port, r);
 	if (r == -1)

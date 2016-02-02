@@ -59,7 +59,9 @@ static void help(t_options *opt)
 "--ip        ip addresses to scan in dot format\n"
 "--file      File name containing IP addresses to scan,\n"
 "--speedup   [250 max] number of parallel threads to use\n"
-"--scan      SYN/NULL/FIN/XMAS/ACK/UDP\n");
+"--scan      SYN/NULL/FIN/XMAS/ACK/UDP/WIN\n"
+"--timeout   Set read timeout\n"
+"--retry     Set max number of probes retransmissions\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -78,6 +80,16 @@ static int update_timeout(t_options *opt, char *av)
 	opt->timeout = atoi(av);
 	if (opt->timeout <= 0)
 		opt->timeout = PCAP_TIMEOUT;
+	return (2);
+}
+
+static int update_retries(t_options *opt, char *av)
+{
+	if (av == NULL || av[0] == '-')
+		return (-1);
+	opt->retries = atoi(av);
+	if (opt->retries < 0)
+		opt->retries = DEFAULT_RETRIES;
 	return (2);
 }
 
@@ -190,6 +202,8 @@ static int test_arg(t_options *opt, char **av)
 		i = update_timeout(opt, av[1]);
 	else if (ft_strequ(av[0], "--scan"))
 		i = update_scan(opt, av);
+	else if (ft_strequ(av[0], "--retry"))
+		i = update_retries(opt, av[1]);
 	else
 		help(opt);
 	return (i);
@@ -222,13 +236,17 @@ t_options parse_opt(int ac, char **av)
 	to_return.scans[SCAN_UDP] = 1;
 	to_return.scans[SCAN_WIN] = 0;
 	to_return.timeout = PCAP_TIMEOUT;
+	to_return.retries = -1;
 
 	i = 1;
 	while (av[i] != NULL)
 	{
 		res = test_arg(&to_return, av + i);
 		if (res == -1)
+		{
+			fprintf(stderr, "Parsing error near %s\n", av[i]);
 			_exit(EXIT_FAILURE);
+		}
 		i += res;
 	}
 
