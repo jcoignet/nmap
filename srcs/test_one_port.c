@@ -87,7 +87,8 @@ t_pstate test_one_port(
 	char *saddr,
 	char *dev,
 	int islocal,
-	int retries
+	int retries,
+	int badsum
 ) {
 	char	errbuf[PCAP_ERRBUF_SIZE];
 	bpf_u_int32	netp, maskp;
@@ -147,7 +148,7 @@ t_pstate test_one_port(
 	    retries = DEFAULT_RETRIES;
 	while (retries >= 0 && r == 0)
 	{
-		ft_ping(port, sock, ip_addr, scan, info, saddr, islocal);
+		ft_ping(port, sock, ip_addr, scan, info, saddr, islocal, badsum);
 		r = pcap_dispatch(handle, 1, ft_callback, (u_char*)&cdata);
 		retries--;
 	}

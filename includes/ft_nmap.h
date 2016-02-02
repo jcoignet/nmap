@@ -116,6 +116,7 @@ typedef struct	s_options
 	int			nb_thread;
 	int		timeout;
 	int		retries;
+	int		badsum;
 
 	/*
 	** if (opt->scans[SCAN_UDP] == 1), then scan udp is required.
@@ -136,13 +137,14 @@ typedef struct	s_nmap
 t_options		parse_opt(int ac, char **av);
 void			print_options(t_options *opt);
 void			ft_ping(int port, int sock, char *ip_addr, t_scan scan,
-						struct addrinfo info, char *saddr, int islocal);
+						struct addrinfo info, char *saddr,
+						int islocal, int badsum);
 void			parse_ports(t_nmap *nmap);
 void			quit(t_nmap *nmap, int quit_status);
 void			free_options(t_options *opt);
 t_pstate 		test_one_port(int port, char *ip_addr,
 					struct addrinfo addrinfo, t_scan scan, int timeout, char *saddr,
-					char *dev, int islocal, int retries);
+					char *dev, int islocal, int retries, int badsum);
 void			set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate *new_states);
 
 /*

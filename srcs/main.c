@@ -111,7 +111,7 @@ void *thread_fn(void *v_nmap)
 	    {
 		res[i] = STATE_UNTESTED;
 		if (scans[i] == 1 && i != SCAN_UDP)
-		    res[i] = test_one_port(port->id, ip_addr, *port->parent->info, i, nmap->opts.timeout, nmap->saddr, nmap->dev, port->parent->islocal, nmap->opts.retries);
+		    res[i] = test_one_port(port->id, ip_addr, *port->parent->info, i, nmap->opts.timeout, nmap->saddr, nmap->dev, port->parent->islocal, nmap->opts.retries, nmap->opts.badsum);
 		i++;
 	    }
 	    //todo set_port_as_tested with res[nb_scan]
@@ -209,7 +209,7 @@ void	udp_scan(t_nmap *nmap)
 	    i = 0;
 	    while (ports[i].id != 0)
 	    {
-		state = test_one_port(ports[i].id, ip->hostip, *ports[i].parent->info, SCAN_UDP, nmap->opts.timeout, nmap->saddr, nmap->dev, ip->islocal, nmap->opts.retries);
+		state = test_one_port(ports[i].id, ip->hostip, *ports[i].parent->info, SCAN_UDP, nmap->opts.timeout, nmap->saddr, nmap->dev, ip->islocal, nmap->opts.retries, nmap->opts.badsum);
 		ports[i].states[SCAN_UDP] = state;
 		i++;
 	    }
@@ -325,8 +325,9 @@ int main (int argc, char *argv[])
 	    printf("gettimeofday error: %s\n", strerror(errno));
 	    return EXIT_FAILURE;
 	}
-	output_timediff(&starttime, &endtime);
+
 	// Output and exit
+	output_timediff(&starttime, &endtime);
 	output_scan(&nmap->opts);
 	free_nmap(&nmap);
 	pthread_mutex_destroy(&nmap->mutex);

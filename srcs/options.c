@@ -183,6 +183,12 @@ static int update_scan(t_options *opt, char **av)
 	return (to_return);
 }
 
+static int update_badsum(t_options *opt)
+{
+    opt->badsum = 1;
+    return 1;
+
+}
 static int test_arg(t_options *opt, char **av)
 {
 	int		i;
@@ -204,6 +210,8 @@ static int test_arg(t_options *opt, char **av)
 		i = update_scan(opt, av);
 	else if (ft_strequ(av[0], "--retry"))
 		i = update_retries(opt, av[1]);
+	else if (ft_strequ(av[0], "--badsum"))
+		i = update_badsum(opt);
 	else
 		help(opt);
 	return (i);
@@ -237,6 +245,7 @@ t_options parse_opt(int ac, char **av)
 	to_return.scans[SCAN_WIN] = 0;
 	to_return.timeout = PCAP_TIMEOUT;
 	to_return.retries = -1;
+	to_return.badsum = 0;
 
 	i = 1;
 	while (av[i] != NULL)

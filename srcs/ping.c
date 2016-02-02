@@ -39,7 +39,8 @@ void	    udp_ping(
 	char *ip_addr,
 	struct addrinfo info,
 	char *saddr,
-	int islocal
+	int islocal,
+	int badsum
 ) {
     char	sendbuf[sizeof(struct udphdr)];
     int	len;
@@ -71,7 +72,10 @@ void	    udp_ping(
     char *pseudogram = malloc(psize);
     memcpy(pseudogram , (char*) &psh , sizeof (struct pseudo_header));
     memcpy(pseudogram + sizeof(struct pseudo_header) , udph , sizeof(struct udphdr));
-    udph->check = ft_checksum((u_short*) pseudogram , psize);
+    if (badsum == 1)
+	udph->check = 1234;
+    else
+	udph->check = ft_checksum((u_short*) pseudogram , psize);
     if ((sent = sendto(sock, sendbuf, len, 0,
 			info.ai_addr, info.ai_addrlen)) < 0)
 	printf("Error: sendto failed.\n");
@@ -86,11 +90,12 @@ void ft_ping(
 	t_scan scan,
 	struct addrinfo info,
 	char *saddr,
-	int islocal
+	int islocal,
+	int badsum
 ) {
 	if (scan == SCAN_UDP)
 	{
-	    udp_ping(port, sock, ip_addr, info, saddr, islocal);
+	    udp_ping(port, sock, ip_addr, info, saddr, islocal, badsum);
 	    return ;
 	}
 
@@ -150,7 +155,10 @@ void ft_ping(
 	char	*pseudogram = malloc(psize);
 	ft_memcpy(pseudogram, (char*)&psh, sizeof(struct pseudo_header));
 	ft_memcpy(pseudogram + sizeof(struct pseudo_header), tcph, sizeof(struct tcphdr));
-	tcph->check = ft_checksum((u_short*)pseudogram, psize);
+	if (badsum == 1)
+		tcph->check = 1234;
+	else
+		tcph->check = ft_checksum((u_short*)pseudogram, psize);
 	if ((sent = sendto(sock, sendbuf, len, 0,
 			info.ai_addr, info.ai_addrlen)) < 0)
 		printf("Error: sendto failed.\n");
