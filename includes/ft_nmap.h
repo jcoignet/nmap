@@ -49,7 +49,7 @@
 # define ICMP_HEADER_LEN 8
 # define NB_SCAN 7
 # define SRC_PORT 80
-# define PCAP_TIMEOUT 3000
+# define PCAP_TIMEOUT 1500
 # define MAX_PORT 65535
 # define DEFAULT_RETRIES 1
 

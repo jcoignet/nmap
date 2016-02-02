@@ -218,6 +218,32 @@ void	udp_scan(t_nmap *nmap)
     }
 }
 
+void	output_timediff(struct timeval *y, struct timeval *x)
+{
+    struct timeval res;
+
+    if (x->tv_usec < y->tv_usec) {
+	int nsec = (y->tv_usec - x->tv_usec) / 1000000 + 1;
+	y->tv_usec -= 1000000 * nsec;
+	y->tv_sec += nsec;
+    }
+    if (x->tv_usec - y->tv_usec > 1000000) {
+	int nsec = (x->tv_usec - y->tv_usec) / 1000000;
+	y->tv_usec += 1000000 * nsec;
+	y->tv_sec -= nsec;
+    }
+
+    res.tv_sec = x->tv_sec - y->tv_sec;
+    res.tv_usec = x->tv_usec - y->tv_usec;
+
+    printf("Scan done in %ld.%ld secs\n", res.tv_sec, res.tv_usec);
+ /*   struct timeval  res;
+
+    timersub(start, end, &res);
+
+    printf("Scan done in %ld.%ld secs\n", res.tv_sec, res.tv_usec);*/
+}
+
 pthread_mutex_t pcap_compile_mutex;
 int main (int argc, char *argv[])
 {
@@ -227,11 +253,18 @@ int main (int argc, char *argv[])
 	long t;
 	void *status;
 	t_nmap	*nmap;
+	struct timeval starttime, endtime;
 
 	// Check rights
 	if (getuid() != 0)
 	{
 	    printf("Error: you must be root to execute %s\n", argv[0]);
+	    return EXIT_FAILURE;
+	}
+	// Get starting time
+	if (gettimeofday(&starttime, NULL) != 0)
+	{
+	    printf("gettimeofday error: %s\n", strerror(errno));
 	    return EXIT_FAILURE;
 	}
 	// Initialize nmap
@@ -287,6 +320,12 @@ int main (int argc, char *argv[])
 	    printf("Udp scans done.\n");
 	}
 
+	if (gettimeofday(&endtime, NULL) != 0)
+	{
+	    printf("gettimeofday error: %s\n", strerror(errno));
+	    return EXIT_FAILURE;
+	}
+	output_timediff(&starttime, &endtime);
 	// Output and exit
 	output_scan(&nmap->opts);
 	free_nmap(&nmap);
