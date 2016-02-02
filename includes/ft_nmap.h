@@ -104,6 +104,7 @@ typedef struct	s_ip
 	*/
 	int			tested;
 	int			islocal;
+	int			isvalid;
     struct addrinfo	*info;
 }				t_ip;
 

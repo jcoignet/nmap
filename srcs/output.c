@@ -82,12 +82,15 @@ void	output_scan(t_options *opts)
     while (ips != NULL)
     {
 	i = 0;
-	display_ip_info((t_ip*)ips->content);
-	ports = ((t_ip*)(ips->content))->ports;
-	while (ports[i].id != 0)
+	if (((t_ip*)(ips->content))->isvalid)
 	{
-	    display_port_data(&(ports[i]), opts);
-	    i++;
+	    display_ip_info((t_ip*)ips->content);
+	    ports = ((t_ip*)(ips->content))->ports;
+	    while (ports[i].id != 0)
+	    {
+		display_port_data(&(ports[i]), opts);
+		i++;
+	    }
 	}
 	ips = ips->next;
     }

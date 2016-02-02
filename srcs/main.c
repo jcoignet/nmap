@@ -40,7 +40,7 @@ t_port *get_next_untested_port(t_nmap *nmap, int *port, char **ip_addr)
 	while (iter != NULL)
 	{
 		ip = (t_ip*)iter->content;
-		if (!ip->tested) {
+		if (!ip->tested && ip->isvalid) {
 
 			// for each port to test of this ip
 			i = 0;
@@ -129,8 +129,10 @@ void addr_info(t_ip *ip)
 	if (getaddrinfo(ip->hostname, NULL, NULL, &info) != 0)
 	{
 		fprintf(stderr, "ft_nmap: unknown host %s\n", ip->hostname);
-		exit(EXIT_FAILURE);
+		ip->isvalid = 0;
+		return ;
 	}
+	ip->isvalid = 1;
 	inet_ntop(AF_INET,
 			(void*)&(((struct sockaddr_in*)(info->ai_addr))->sin_addr.s_addr),
 			buf,IP_BUFFLEN);
@@ -202,13 +204,15 @@ void	udp_scan(t_nmap *nmap)
     {
 	ip = iter->content;
 	ports = ip->ports;
-	i = 0;
-	while (ports[i].id != 0)
+	if (ip->isvalid == 1)
 	{
-
-	    state = test_one_port(ports[i].id, ip->hostip, *ports[i].parent->info, SCAN_UDP, nmap->opts.timeout, nmap->saddr, nmap->dev, ip->islocal);
-	    ports[i].states[SCAN_UDP] = state;
-	    i++;
+	    i = 0;
+	    while (ports[i].id != 0)
+	    {
+		state = test_one_port(ports[i].id, ip->hostip, *ports[i].parent->info, SCAN_UDP, nmap->opts.timeout, nmap->saddr, nmap->dev, ip->islocal);
+		ports[i].states[SCAN_UDP] = state;
+		i++;
+	    }
 	}
 	iter = iter->next;
     }

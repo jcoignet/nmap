@@ -146,6 +146,7 @@ t_pstate test_one_port(
 	int to = timeout / 1000;
 	if (to <= 0)
 	    to = 1;
+	to = 1;
 	while (to > 0 && r == 0)
 	{
 		r = pcap_dispatch(handle, 1, ft_callback, (u_char*)&cdata);
