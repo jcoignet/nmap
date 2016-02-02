@@ -103,6 +103,7 @@ typedef struct	s_ip
 	** true if all ports of this ip has been tested.
 	*/
 	int			tested;
+	int			islocal;
     struct addrinfo	*info;
 }				t_ip;
 
@@ -126,19 +127,18 @@ typedef struct	s_nmap
     char	    	*progname;
     t_options		opts;
     pthread_mutex_t	mutex;
-    int		    	sport;
     int		    	timeout;
 }				t_nmap;
 
 t_options		parse_opt(int ac, char **av);
 void			print_options(t_options *opt);
 void			ft_ping(int port, int sock, char *ip_addr, t_scan scan,
-						struct addrinfo info, char *saddr);
+						struct addrinfo info, char *saddr, int islocal);
 void			parse_ports(t_nmap *nmap);
 void			quit(t_nmap *nmap, int quit_status);
 void			free_options(t_options *opt);
 t_pstate 		test_one_port(int port, char *ip_addr,
-					struct addrinfo addrinfo, t_scan scan, int timeout, char *saddr, char *dev);
+					struct addrinfo addrinfo, t_scan scan, int timeout, char *saddr, char *dev, int islocal);
 void			set_port_as_tested(t_nmap *nmap, t_port *port, t_pstate *new_states);
 
 /*

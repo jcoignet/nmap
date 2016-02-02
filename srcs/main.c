@@ -111,7 +111,7 @@ void *thread_fn(void *v_nmap)
 	    {
 		res[i] = STATE_UNTESTED;
 		if (scans[i] == 1 && i != SCAN_UDP)
-		    res[i] = test_one_port(port->id, ip_addr, *port->parent->info, i, nmap->opts.timeout, nmap->saddr, nmap->dev);
+		    res[i] = test_one_port(port->id, ip_addr, *port->parent->info, i, nmap->opts.timeout, nmap->saddr, nmap->dev, port->parent->islocal);
 		i++;
 	    }
 	    //todo set_port_as_tested with res[nb_scan]
@@ -134,6 +134,10 @@ void addr_info(t_ip *ip)
 	inet_ntop(AF_INET,
 			(void*)&(((struct sockaddr_in*)(info->ai_addr))->sin_addr.s_addr),
 			buf,IP_BUFFLEN);
+	if (!strcmp(buf, "127.0.0.1"))
+	    ip->islocal = 1;
+	else
+	    ip->islocal = 0;
 	ip->hostip = strdup(buf);
 	ip->info = info;
 }
@@ -202,7 +206,7 @@ void	udp_scan(t_nmap *nmap)
 	while (ports[i].id != 0)
 	{
 
-	    state = test_one_port(ports[i].id, ip->hostip, *ports[i].parent->info, SCAN_UDP, nmap->opts.timeout, nmap->saddr, nmap->dev);
+	    state = test_one_port(ports[i].id, ip->hostip, *ports[i].parent->info, SCAN_UDP, nmap->opts.timeout, nmap->saddr, nmap->dev, ip->islocal);
 	    ports[i].states[SCAN_UDP] = state;
 	    i++;
 	}
@@ -234,7 +238,6 @@ int main (int argc, char *argv[])
 	if ((nmap->saddr = get_source_addr(nmap->dev)) == NULL)
 	    return EXIT_FAILURE;
 	
-	nmap->sport = 80;
 	nmap->opts = parse_opt(argc, argv);
 	parse_ports(nmap);
 	print_options(&nmap->opts);

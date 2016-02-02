@@ -17,7 +17,7 @@ t_pstate	tcp_packet_state(t_callback_data *cdata, struct tcphdr *tcph)
 	}
 	return STATE_CLOSED;
     }
-    if (tcph->syn == 1)//ack too or not ?
+    if (tcph->syn == 1 || tcph->ack == 1)
 	return STATE_OPEN;
     return STATE_FILTERED;
 }
@@ -85,7 +85,8 @@ t_pstate test_one_port(
 	t_scan scan,
 	int timeout,
 	char *saddr,
-	char *dev
+	char *dev,
+	int islocal
 ) {
 	char	errbuf[PCAP_ERRBUF_SIZE];
 	bpf_u_int32	netp, maskp;
@@ -102,6 +103,8 @@ t_pstate test_one_port(
 	}
 
 //	printf("Test port %s:%d by %ld\n", ip_addr, port, (long) pthread_self());
+	if (islocal == 1)
+		dev = strdup("lo");
 	if (scan == SCAN_UDP)
 		asprintf(&filter, "(icmp and src %s) or (src %s and src port %d)", ip_addr, ip_addr, port);//udp
 	else
@@ -139,13 +142,13 @@ t_pstate test_one_port(
 	cdata.scan = scan;
 
 	r = 0;
-	ft_ping(port, sock, ip_addr, scan, info, saddr);
+	ft_ping(port, sock, ip_addr, scan, info, saddr, islocal);
 	int to = timeout / 1000;
 	if (to <= 0)
 	    to = 1;
 	while (to > 0 && r == 0)
 	{
-		r = pcap_dispatch(handle, 0, ft_callback, (u_char*)&cdata);
+		r = pcap_dispatch(handle, 1, ft_callback, (u_char*)&cdata);
 		to--;
 	}
 //	printf("port %d r = %d\n", port, r);

@@ -38,7 +38,8 @@ void	    udp_ping(
 	int sock,
 	char *ip_addr,
 	struct addrinfo info,
-	char *saddr
+	char *saddr,
+	int islocal
 ) {
     char	sendbuf[sizeof(struct udphdr)];
     int	len;
@@ -58,7 +59,10 @@ void	    udp_ping(
     udph->check = 0; //leave checksum 0 now, filled later by pseudo header
 
     struct pseudo_header psh;
-    psh.source_address = inet_addr(saddr);
+    if (islocal == 1)
+        psh.source_address = inet_addr("127.0.0.1");
+    else
+	psh.source_address = inet_addr(saddr);
     psh.dest_address = sin.sin_addr.s_addr;
     psh.placeholder = 0;
     psh.protocol = IPPROTO_UDP;
@@ -81,11 +85,12 @@ void ft_ping(
 	char *ip_addr,
 	t_scan scan,
 	struct addrinfo info,
-	char *saddr
+	char *saddr,
+	int islocal
 ) {
 	if (scan == SCAN_UDP)
 	{
-	    udp_ping(port, sock, ip_addr, info, saddr);
+	    udp_ping(port, sock, ip_addr, info, saddr, islocal);
 	    return ;
 	}
 
@@ -133,7 +138,10 @@ void ft_ping(
 	    tcph->ack = 1;
 	
 	struct pseudo_header psh;
-	psh.source_address = inet_addr(saddr);
+	if (islocal == 1)
+		psh.source_address = inet_addr("127.0.0.1");//for localhost
+	else
+		psh.source_address = inet_addr(saddr);
 	psh.dest_address = sin.sin_addr.s_addr;
 	psh.placeholder = 0;
 	psh.protocol = IPPROTO_TCP;
